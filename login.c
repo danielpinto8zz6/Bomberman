@@ -2,55 +2,115 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct Users {
+struct users {
   char username[20];
   char password[20];
+  struct users *next;
 };
 
-struct Users users[2];
+struct users *head = NULL;
+struct users *curr = NULL;
+
+struct users *create_list(char username[20], char password[20]) {
+  struct users *ptr = (struct users *)malloc(sizeof(struct users));
+  if (NULL == ptr) {
+    printf("\n Node creation failed \n");
+    return NULL;
+  }
+  strcpy(ptr->username, username);
+  strcpy(ptr->password, password);
+  ptr->next = NULL;
+
+  head = curr = ptr;
+  return ptr;
+}
+
+struct users *add_to_list(char username[20], char password[20]) {
+  if (NULL == head) {
+    return (create_list(username, password));
+  }
+
+  struct users *ptr = (struct users *)malloc(sizeof(struct users));
+  if (NULL == ptr) {
+    printf("\n Node creation failed \n");
+    return NULL;
+  }
+  strcpy(ptr->username, username);
+  strcpy(ptr->password, password);
+  ptr->next = NULL;
+
+  curr->next = ptr;
+  curr = ptr;
+
+  return ptr;
+}
+
+void print_list(void) {
+  struct users *ptr = head;
+  while (ptr != NULL) {
+    printf("Username: [%s]\n", ptr->username);
+    printf("Password: [%s] \n\n", ptr->password);
+    ptr = ptr->next;
+  }
+
+  return;
+}
+
+void loadusers() {
+
+  struct users load;
+
+  FILE *file;
+  file = fopen("users_database.txt", "r");
+
+  if (file != NULL) {
+    while (fscanf(file, "%s %s", load.username, load.password) == 2) {
+      add_to_list(load.username, load.password);
+    }
+  } else {
+    printf("\nNão foi possível conectar com a base de dados");
+  }
+  fclose(file);
+}
 
 int validate(char username[20], char password[20]) {
-
-  // Por enquanto vamos assumir que eixste 1 utilizador, depois adicionamos
-  // mais
-  for (int count = 0; count < 2; count++) {
-    if (strcmp(username, users[count].username) == 0) {
-      if (strcmp(password, users[count].password) == 0) {
+  struct users *ptr = head;
+  while (ptr != NULL) {
+    if (strcmp(ptr->username, username) == 0) {
+      if (strcmp(ptr->password, password) == 0) {
         return 1;
       }
     }
+    ptr = ptr->next;
   }
   return 0;
 }
 
-int main(int argc, char const *argv[]) {
+void login() {
+  struct users login;
 
-  char username[20];
-  char password[20];
-  /* code */
-
-  printf("Vamos inserir 2 utilizadores para testar\n\n");
-  // Vamos pedir a inserção de 2 users só para testar, depois vamos buscar ao
-  // ficheiro de texto
-  for (int count = 0; count < 2; count++) {
-    fflush(stdin);
-    printf("\nUtilizador %d", count + 1);
-    printf("\nLogin : ");
-    scanf("%s", users[count].username);
-    printf("\nPassword : ");
-    scanf("%s", users[count].password);
-  }
-
-  printf("Vamos testar o login agora, insira as credênciais\n");
+  printf("#### LOGIN ####\n\n");
   printf("\nUsername : ");
-  scanf("%s", username);
+  scanf("%s", login.username);
   printf("\nPassword : ");
-  scanf("%s", password);
+  scanf("%s", login.password);
 
-  if (validate(username, password) == 1) {
-    printf("Login efetuado com sucesso\n");
-  } else {
-    printf("As credênciais estão erradas\n");
-  }
+  if (validate(login.username, login.password) == 1)
+    printf("\n\nLogin efetuado com sucesso\n");
+  else
+    printf("\n\nAs credênciais estão erradas\n");
+}
+
+int main(void) {
+
+  /* Carregar a lista de utilizadores */
+  loadusers();
+
+  /* Mostrar a lista de utilizadores */
+  print_list();
+
+  /* Efetuar login */
+  login();
+
   return 0;
 }
