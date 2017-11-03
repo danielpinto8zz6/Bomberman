@@ -8,22 +8,40 @@
 struct users *head = NULL;
 struct users *curr = NULL;
 
-int main(void) {
+void keyboard(char *cmd) {
+  char *arg[3];
 
-  /* Carregar a lista de utilizadores */
+  *arg = strtok(cmd, " ");
+
+  if (strcmp(*arg, "add") == 0) {
+    int i = 1;
+    while (i < 3) {
+      *(arg + i) = strtok(NULL, " ");
+      i++;
+    }
+    adduser(*(arg + 1), *(arg + 2));
+  }
+}
+
+int main(int argc, char *argv[]) {
+
+  char cmd[80];
+
+  /* Carregar utilizadores */
   loadusers();
 
-  /* Mostrar a lista de utilizadores */
-  print_list_users();
+  // if (argc != 2) {
+  //   printf("Numero de argumentos invalido!\n");
+  //   exit(3);
+  // }
 
-  /* Efetuar Registo */
-  adduser();
-
-  /* Efetuar Login */
-  login();
-
-  /* Guardar dados no ficheiro de texto */
-  save_users_data();
-
+  while (1) {
+    scanf(" %79[^\n]", cmd);
+    if (cmd[strlen(cmd) - 1] == '\n')
+      cmd[strlen(cmd) - 1] = '\0';
+    if (strcmp(cmd, " ") != 0)
+      keyboard(cmd);
+    printf("Comando: %s\n", cmd);
+  }
   return 0;
 }
