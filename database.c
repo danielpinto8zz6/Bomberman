@@ -75,6 +75,7 @@ void loadusers() {
 
 void print_list_users(void) {
   struct users *ptr = head;
+  printf("\nLista de users registados\n");
   while (ptr != NULL) {
     printf("\nUsername: [%s]", ptr->username);
     printf("\nPassword: [%s] \n\n", ptr->password);
