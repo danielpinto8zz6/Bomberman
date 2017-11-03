@@ -53,6 +53,7 @@ void save_users_data() {
   } else {
     printf("\nNão foi possível conectar com a base de dados");
   }
+  fclose(file);
 }
 
 void loadusers() {

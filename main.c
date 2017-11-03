@@ -1,9 +1,9 @@
+#include "database.h"
+#include "login.h"
+#include "register.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "login.h"
-#include "database.h"
-#include "register.h"
 
 struct users *head = NULL;
 struct users *curr = NULL;

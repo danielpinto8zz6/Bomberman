@@ -1,5 +1,5 @@
-#include "structs.h"
 #include "database.h"
+#include "structs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,8 +25,9 @@ void adduser() {
   scanf("%s", add.password);
 
   /* Verificar que o utilizador nao existe */
-  if (check_if_user_exists(add.username) == 0)
+  if (check_if_user_exists(add.username) == 0) {
     add_to_list(add.username, add.password);
-  else
+    save_users_data();
+  } else
     printf("\nJá existe um jogador com esse nome registado");
 }
