@@ -9,23 +9,35 @@ struct users *head = NULL;
 struct users *curr = NULL;
 
 void keyboard(char *cmd) {
-  char *arg[3];
+  char **arg = NULL;
+  char *p = strtok(cmd, " ");
+  int n_spaces = 0;
 
-  *arg = strtok(cmd, " ");
+  /* dividir a string e anexar tokens em 'arg' */
+  while (p) {
+    arg = realloc(arg, sizeof(char *) * ++n_spaces);
+    if (arg == NULL)
+      exit(-1); /* falha na alocação de meḿória */
+    arg[n_spaces - 1] = p;
+    p = strtok(NULL, " ");
+  }
 
-  if (strcmp(*arg, "add") == 0) {
-    int i = 1;
-    while (i < 3) {
-      *(arg + i) = strtok(NULL, " ");
-      i++;
-    }
-    adduser(*(arg + 1), *(arg + 2));
-  } else if (strcmp(*arg, "shutdown") == 0) {
-    /* Por enquanto terminamos o programa, mais tarde será implementado para
+  /* Realocar um elemento extra para o último NULL */
+  arg = realloc(arg, sizeof(char *) * (n_spaces + 1));
+  arg[n_spaces] = 0;
+
+  if (strcmp(arg[0], "add") == 0) {
+    if (arg[1] != NULL && arg[2] != NULL)
+      adduser(arg[1], arg[2]);
+    else
+      printf("Faltam argumentos\n");
+  } else if (strcmp(arg[0], "shutdown") == 0) {
+    /* Por enquanto terminamos o programa, mais tarde será implementado
+    para
      * terminar o servidor */
     printf("Programa terminado");
     exit(0);
-  } else if (strcmp(*arg, "users") == 0) {
+  } else if (strcmp(arg[0], "users") == 0) {
     /* Por enquanto mostramos a lista de utilizadores, mais tarde serão
      * mostrados apenas os utilizadores ativos */
     print_list_users();
