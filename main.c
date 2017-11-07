@@ -27,9 +27,9 @@ void keyboard(char *cmd) {
   arg[n_spaces] = 0;
 
   if (strcmp(arg[0], "add") == 0) {
-    if (arg[1] != NULL && arg[2] != NULL)
+    if (arg[1] != NULL && arg[2] != NULL) {
       adduser(arg[1], arg[2]);
-    else
+    } else
       printf("Faltam argumentos\n");
   } else if (strcmp(arg[0], "shutdown") == 0) {
     /* Por enquanto terminamos o programa, mais tarde será implementado
@@ -44,6 +44,7 @@ void keyboard(char *cmd) {
   } else {
     printf("Comando inválido!\n");
   }
+  free(arg);
 }
 
 int main(int argc, char *argv[]) {
