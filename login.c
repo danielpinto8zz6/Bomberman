@@ -22,9 +22,9 @@ void login() {
 
   printf("#### LOGIN ####\n");
   printf("\nUsername : ");
-  scanf("%s", login.username);
+  scanf("%19[^\n]s", login.username);
   printf("\nPassword : ");
-  scanf("%s", login.password);
+  scanf("%19[^\n]s", login.password);
 
   if (validate(login.username, login.password) == 1)
     printf("\nLogin efetuado com sucesso\n");

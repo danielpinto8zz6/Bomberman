@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
   // }
 
   while (1) {
-    scanf(" %79[^\n]", cmd);
+    scanf(" %79[^\n]s", cmd);
     if (cmd[strlen(cmd) - 1] == '\n')
       cmd[strlen(cmd) - 1] = '\0';
     if (strcmp(cmd, " ") != 0)
