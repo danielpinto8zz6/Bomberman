@@ -3,7 +3,7 @@ CFLAGS=-c -Wall
 LDFLAGS=
 SOURCES=database.c  login.c  main.c  register.c
 OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE=bomberman
+EXECUTABLE=bombermanServer
 
 all: $(SOURCES) $(EXECUTABLE)
 	
@@ -14,4 +14,4 @@ $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(CFLAGS) $< -o $@
 
 clean: 
-	rm bomberman *o
+	rm bombermanServer *o
