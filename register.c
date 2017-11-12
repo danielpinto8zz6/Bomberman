@@ -23,5 +23,5 @@ void adduser(char username[20], char password[20]) {
     save_users_data();
     printf("Utilizador adicionado com sucesso\n");
   } else
-    printf("\nJá existe um jogador com esse nome registado");
+    printf("\nJá existe um jogador com esse nome registado\n");
 }

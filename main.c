@@ -35,14 +35,18 @@ void keyboard(char *cmd) {
     /* Por enquanto terminamos o programa, mais tarde será implementado
     para
      * terminar o servidor */
-    printf("Programa terminado");
+    printf("Programa terminado\n");
     exit(0);
   } else if (strcmp(arg[0], "users") == 0) {
     /* Por enquanto mostramos a lista de utilizadores, mais tarde serão
      * mostrados apenas os utilizadores ativos */
     print_list_users();
+  } else if (strcmp(arg[0], "help") == 0) {
+    printf("add [username][password] -> adiciona um utilizador\n");
+    printf("shutdown -> termina o servidor\n");
   } else {
     printf("Comando inválido!\n");
+    printf("Insira <help> para ver a lista de comandos disponíveis\n");
   }
   free(arg);
 }

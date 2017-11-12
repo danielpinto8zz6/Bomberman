@@ -12,8 +12,8 @@ struct usersPlaying {
   char username[20];
   int pontuation;
   int position [1][1];
-  int miniBombs = 3;
-  int bigBombs = 2;
+  int miniBombs ;
+  int bigBombs ;
   int timeToPlay;
 };
 
@@ -28,5 +28,5 @@ struct board {
   int colector [50][50];
   int extra [50][50];
   int time [1][1][1];
-  usersPlaying players;
+  struct usersPlaying players;
 };
