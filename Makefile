@@ -1,17 +1,11 @@
-CC=gcc
-CFLAGS=-c -Wall
-LDFLAGS=
-SOURCES=database.c  login.c  main.c  register.c
-OBJECTS=$(SOURCES:.c=.o)
-EXECUTABLE=bombermanServer
+SUBDIRS = src/server src/client
 
-all: $(SOURCES) $(EXECUTABLE)
-	
-$(EXECUTABLE): $(OBJECTS)
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+all: $(SUBDIRS)
 
-.c.o:
-	$(CC) $(CFLAGS) $< -o $@
+$(SUBDIRS):
+	$(MAKE) -C $@
+
+.PHONY: $(SUBDIRS)
 
 clean: 
-	rm bombermanServer *o
+	rm build/bombermanClient build/bombermanServer src/server/*.o src/client/*.o

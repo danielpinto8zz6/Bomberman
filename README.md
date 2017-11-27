@@ -8,15 +8,17 @@
 
 # Meta 2
  - [X] Todos os requisitos da meta 1
- - [ ] Comunicação com named pipes a funcionar
+ - [X] Comunicação com named pipes a funcionar
  - [ ] Gestão dos clientes (detetar que existem, avisar que o servidor encerrou, etc)
- - [ ] Login dos jogadores a funcionar
+ - [X] Login dos jogadores a funcionar
 
 Compilar e Executar 
 --------
 ```
 make
+cd build
 ./bombermanServer
+./bombermanClient
 ```
 
 Limpar
