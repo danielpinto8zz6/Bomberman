@@ -8,8 +8,8 @@ struct users {
 struct usersActive {
   char username[20];
   char password[20];
-  char action[10];
   int pid;
+  struct usersActive *next;
 };
 
 struct usersPlaying {

@@ -1,7 +1,7 @@
 #include "../structs.h"
-#include "database.h"
+#include "activeusers.h"
 #include "login.h"
-#include "register.h"
+#include "users.h"
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
@@ -16,17 +16,8 @@
 struct users *head = NULL;
 struct users *curr = NULL;
 
-int x = 0;
-struct usersActive active[20];
-
-bool check_if_user_is_logged(char username[20]) {
-  for (int i = 0; i < x; i++) {
-    if (strcmp(active[i].username, username) == 0) {
-      return true;
-    }
-  }
-  return false;
-}
+struct usersActive *active_head = NULL;
+struct usersActive *active_curr = NULL;
 
 void *receiver(void *arg) {
   struct usersActive receivedCredentials;
@@ -43,16 +34,15 @@ void *receiver(void *arg) {
     sprintf(pipe, "pipe-%d", receivedCredentials.pid);
     fd_send = open(pipe, O_WRONLY, 0600);
 
-    if (check_if_user_is_logged(receivedCredentials.username) == false) {
+    /* 0 - not logged */
+    if (check_if_user_is_logged(receivedCredentials.username) == 0) {
       if (validate(receivedCredentials.username,
                    receivedCredentials.password) == 1) {
         printf("\n%d -> %s iniciou sessão\n", receivedCredentials.pid,
                receivedCredentials.username);
         strcpy(msg, "Sessão iniciada com sucesso\n");
-        active[x].pid = receivedCredentials.pid;
-        strcpy(active[x].username, receivedCredentials.username);
-        strcpy(active[x].password, receivedCredentials.password);
-        x++;
+        add_to_active_users_list(receivedCredentials.pid,
+                                 receivedCredentials.username);
       } else {
         sprintf(msg, "\n%d -> %s tentou iniciar sessão, credênciais erradas\n",
                 receivedCredentials.pid, receivedCredentials.username);
@@ -77,13 +67,6 @@ void shutdown() {
 void SIGhandler(int sig) {
   signal(sig, SIG_IGN);
   shutdown();
-}
-
-void print_active_users() {
-  printf("Active users :\n\n");
-  for (int i = 0; i < x; i++) {
-    printf("%d -> %s\n\n", active[i].pid, active[i].username);
-  }
 }
 
 void keyboard(char *cmd) {
@@ -112,10 +95,13 @@ void keyboard(char *cmd) {
   } else if (strcmp(arg[0], "shutdown") == 0) {
     shutdown();
   } else if (strcmp(arg[0], "users") == 0) {
-    print_active_users();
+    print_active_users_list();
   } else if (strcmp(arg[0], "help") == 0) {
     printf("add [username][password] -> adiciona um utilizador\n");
     printf("shutdown -> termina o servidor\n");
+  } else if (strcmp(arg[0], "registered") == 0) {
+    printf("Registered users : \n\n");
+    print_users_list();
   } else {
     printf("Comando inválido!\n");
     printf("Insira <help> para ver a lista de comandos disponíveis\n");
