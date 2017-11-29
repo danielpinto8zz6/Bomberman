@@ -114,6 +114,8 @@ void keyboard(char *cmd) {
   } else if (strcmp(arg[0], "help") == 0) {
     printf("add [username][password] -> adiciona um utilizador\n");
     printf("shutdown -> termina o servidor\n");
+    printf("users -> mostra os utilizadores ativos\n");
+    printf("registered -> mostra os utilizadores registados\n");
   } else if (strcmp(arg[0], "registered") == 0) {
     printf("Registered users : \n\n");
     print_users_list();
