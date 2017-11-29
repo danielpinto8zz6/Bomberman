@@ -74,6 +74,16 @@ void *receiver(void *arg) {
 }
 
 void shutdown() {
+  char pipe[10];
+  int fd;
+
+  char msg[8] = "exit";
+  for (int i = 0; i < nr_active_users; i++) {
+    sprintf(pipe, "pipe-%d", active_user[i].pid);
+    fd = open(pipe, O_WRONLY, 0600);
+    write(fd, &msg, sizeof(msg));
+    close(fd);
+  }
   unlink(PIPE);
   printf("Programa terminado\n");
   exit(0);

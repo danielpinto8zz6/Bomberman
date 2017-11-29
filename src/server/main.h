@@ -1,17 +1,8 @@
-void loadusers();
 int main(int argc,char *argv[]);
 void error(char *msg);
-void print_users_list();
-void print_active_users_list();
-void add_user(char username[20],char password[20]);
 void keyboard(char *cmd);
 void SIGhandler(int sig);
 void shutdown();
-void delete_from_active_users_list(int pid);
-char *get_username_from_pid(int pid);
-void add_to_active_users_list(int pid,char username[20]);
-int validate(char username[20],char password[20]);
-int check_if_user_is_logged(char username[20]);
 void *receiver(void *arg);
 extern usersActive active_user[20];
 extern int nr_active_users;

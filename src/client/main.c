@@ -9,6 +9,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+void forced_shutdown() {
+  char pipe[10];
+  sprintf(pipe, "pipe-%d", getpid());
+  unlink(pipe);
+  printf("Programa terminado\n");
+  exit(0);
+}
+
 void *receiver(void *arg) {
   char pipe[10];
   int fd_pipe;
@@ -22,7 +30,12 @@ void *receiver(void *arg) {
 
   do {
     read(fd_pipe, &msg, sizeof(msg));
-    printf("%s", msg);
+    if (strcmp(msg, "exit") == 0) {
+      printf("O servidor encerrou, a fechar pipe e sair...\n");
+      forced_shutdown();
+    } else {
+      printf("%s", msg);
+    }
   } while (stop == 0);
 
   close(fd_pipe);
