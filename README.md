@@ -9,10 +9,10 @@
 # Meta 2
  - [X] Todos os requisitos da meta 1
  - [X] Comunicação com named pipes a funcionar
- - [ ] Gestão dos clientes (detetar que existem, avisar que o servidor encerrou, etc)
+ - [X] Gestão dos clientes (detetar que existem, avisar que o servidor encerrou, etc)
  - [X] Login dos jogadores a funcionar
 
-Compilar e Executar 
+Compilar e Executar
 --------
 ```
 make

@@ -1,3 +1,4 @@
 void login();
-extern struct users *head;
+extern users user[20];
+extern int nr_users;
 int validate(char username[20],char password[20]);

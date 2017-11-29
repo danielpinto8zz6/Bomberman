@@ -4,93 +4,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct users *create_users_list(char username[20], char password[20]) {
-  struct users *ptr = (struct users *)malloc(sizeof(struct users));
-  if (NULL == ptr) {
-    printf("\n Node creation failed \n");
-    return NULL;
-  }
-  strcpy(ptr->username, username);
-  strcpy(ptr->password, password);
-
-  head = curr = ptr;
-  return ptr;
+void add_to_users_list(char username[20], char password[20]) {
+  strcpy(user[nr_users].username, username);
+  strcpy(user[nr_users].password, password);
+  nr_users++;
 }
 
-struct users *add_to_users_list(char username[20], char password[20]) {
-  if (NULL == head) {
-    return (create_users_list(username, password));
-  }
-
-  struct users *ptr = (struct users *)malloc(sizeof(struct users));
-  if (NULL == ptr) {
-    printf("Erro ao criar nó \n");
-    return NULL;
-  }
-  strcpy(ptr->username, username);
-  strcpy(ptr->password, password);
-
-  curr->next = ptr;
-  curr = ptr;
-
-  return ptr;
-}
-
-void save_users_data() {
-  struct users *ptr = head;
-
-  FILE *file;
-  file = fopen("users_database.txt", "w+");
-
-  if (file != NULL) {
-
-    while (ptr != NULL) {
-      fprintf(file, "%s %s\n", ptr->username, ptr->password);
-      ptr = ptr->next;
-    }
-  } else {
-    printf("\nNão foi possível conectar com a base de dados");
-  }
-  fclose(file);
-}
-
-struct users *search_in_users_list(char username[20], struct users **prev) {
-  struct users *ptr = head;
-  struct users *tmp = NULL;
-  int found = 0;
-
-  while (ptr != NULL) {
-    if (strcmp(ptr->username, username)) {
-      found = 1;
-      break;
-    } else {
-      tmp = ptr;
-      ptr = ptr->next;
-    }
-  }
-
-  if (found == 1) {
-    if (prev)
-      *prev = tmp;
-    return ptr;
-  } else {
-    return NULL;
-  }
-}
-
-void adduser(char username[20], char password[20]) {
-  /* Verificar que o utilizador nao existe */
-  if (search_in_users_list(username, NULL) == 0) {
-    add_to_users_list(username, password);
-    save_users_data();
-    printf("Utilizador adicionado com sucesso\n");
-  } else
-    printf("\nJá existe um jogador com esse nome registado\n");
+void print_users_list() {
+  for (int i = 0; i < nr_users; i++)
+    printf("%s\n", user[i].username);
 }
 
 void loadusers() {
-
-  struct users load;
+  users load;
 
   FILE *file;
   file = fopen("users_database.txt", "r");
@@ -105,10 +31,33 @@ void loadusers() {
   fclose(file);
 }
 
-void print_users_list() {
-  struct users *ptr = head;
-  while (ptr != NULL) {
-    printf("%s\n", ptr->username);
-    ptr = ptr->next;
+void save_users_data() {
+  FILE *file;
+  file = fopen("users_database.txt", "w+");
+
+  if (file != NULL) {
+
+    for (int i = 0; i < nr_users; i++)
+      fprintf(file, "%s %s\n", user[i].username, user[i].password);
+  } else {
+    printf("\nNão foi possível conectar com a base de dados");
   }
+  fclose(file);
+}
+
+int check_if_user_exists(char username[20]) {
+  for (int i = 0; i < nr_users; i++)
+    if (strcmp(user[i].username, username) == 0)
+      return 1;
+  return 0;
+}
+
+void add_user(char username[20], char password[20]) {
+  /* Verificar que o utilizador nao existe */
+  if (check_if_user_exists(username) == 0) {
+    add_to_users_list(username, password);
+    save_users_data();
+    printf("Utilizador adicionado com sucesso\n");
+  } else
+    printf("\nJá existe um jogador com esse nome registado\n");
 }

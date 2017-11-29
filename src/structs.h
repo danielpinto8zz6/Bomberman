@@ -1,27 +1,26 @@
 #define PIPE "serv_pipe"
 
-struct users {
+typedef struct {
   char username[20];
   char password[20];
-  struct users *next;
-};
-struct usersActive {
+} users;
+typedef struct {
   char username[20];
   char password[20];
   int pid;
-  struct usersActive *next;
-};
+  int action;
+} usersActive;
 
-struct usersPlaying {
+typedef struct {
   char username[20];
   int pontuation;
   int position[1][1];
   int miniBombs;
   int bigBombs;
   int timeToPlay;
-};
+} usersPlaying;
 
-struct board {
+typedef struct {
   int block[50][50];
   int exit[1][1];
   int object[50][50];
@@ -32,5 +31,5 @@ struct board {
   int colector[50][50];
   int extra[50][50];
   int time[1][1][1];
-  struct usersPlaying players;
-};
+  usersPlaying players;
+} board;

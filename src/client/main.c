@@ -2,7 +2,6 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,7 +12,7 @@
 void *receiver(void *arg) {
   char pipe[10];
   int fd_pipe;
-  bool stop = false;
+  int stop = 0;
   char msg[1024];
 
   sprintf(pipe, "pipe-%d", getpid());
@@ -24,36 +23,44 @@ void *receiver(void *arg) {
   do {
     read(fd_pipe, &msg, sizeof(msg));
     printf("%s", msg);
-  } while (stop == false);
+  } while (stop == 0);
 
   close(fd_pipe);
   unlink(pipe);
   pthread_exit(0);
 }
 
-bool is_login_fields_valid(struct usersActive active) {
+int is_login_fields_valid(usersActive active) {
   int i;
-  bool status = true;
+  int status = 1;
 
   for (i = 0; active.username[i] != '\0'; i++) {
     if (active.username[i] == ' ')
-      status = false;
+      status = 0;
   }
 
   for (i = 0; active.password[i] != '\0'; i++) {
     if (active.password[i] == ' ')
-      status = false;
+      status = 0;
   }
 
-  if (status == false)
-    printf("O username e a password não podem conter espaço!\n\n");
+  if (status == 0)
+    printf("O username e a password não podem conter espaços!\n\n");
 
   return status;
 }
 
 void shutdown() {
+  usersActive sendData;
+
   char pipe[10];
+  int fd;
+
+  sendData.pid = getpid();
+  sendData.action = 2;
   sprintf(pipe, "pipe-%d", getpid());
+  fd = open(PIPE, O_WRONLY, 0600);
+  write(fd, &sendData, sizeof(sendData));
   unlink(pipe);
   printf("Programa terminado\n");
   exit(0);
@@ -68,7 +75,7 @@ void error(char *msg) { printf("%s", msg); }
 
 int main(int argc, char *argv[]) {
 
-  struct usersActive sendCredentials;
+  usersActive sendCredentials;
   int fd, res;
   char pipe[20];
   pthread_t task;
@@ -104,15 +111,14 @@ int main(int argc, char *argv[]) {
     error("Erro ao criar pipe. A sair...\n");
     exit(0);
   }
-
   do {
-    printf("#### LOGIN ####\n");
+    printf("#### LOGIN ####\n\n");
     printf("\nUsername : ");
     scanf(" %19[^\n]s", sendCredentials.username);
     printf("\nPassword : ");
     scanf(" %19[^\n]s", sendCredentials.password);
-  } while (is_login_fields_valid(sendCredentials) == false);
-
+  } while (is_login_fields_valid(sendCredentials) == 0);
+  sendCredentials.action = 1;
   write(fd, &sendCredentials, sizeof(sendCredentials));
   sleep(2);
 

@@ -1,24 +1,22 @@
-#include "main.h"
 #include "../structs.h"
+#include "main.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 int validate(char username[20], char password[20]) {
-  struct users *ptr = head;
-  while (ptr != NULL) {
-    if (strcmp(ptr->username, username) == 0) {
-      if (strcmp(ptr->password, password) == 0) {
+  for (int i = 0; i < nr_users; i++) {
+    if (strcmp(user[i].username, username) == 0) {
+      if (strcmp(user[i].password, password) == 0) {
         return 1;
       }
     }
-    ptr = ptr->next;
   }
   return 0;
 }
 
 void login() {
-  struct users login;
+  users login;
 
   printf("#### LOGIN ####\n");
   printf("\nUsername : ");

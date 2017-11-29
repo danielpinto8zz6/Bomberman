@@ -1,9 +1,8 @@
-void print_users_list();
-void loadusers();
-void adduser(char username[20],char password[20]);
-struct users *search_in_users_list(char username[20],struct users **prev);
+void add_user(char username[20],char password[20]);
+int check_if_user_exists(char username[20]);
 void save_users_data();
-struct users *add_to_users_list(char username[20],char password[20]);
-extern struct users *curr;
-extern struct users *head;
-struct users *create_users_list(char username[20],char password[20]);
+void loadusers();
+void print_users_list();
+extern int nr_users;
+extern users user[20];
+void add_to_users_list(char username[20],char password[20]);

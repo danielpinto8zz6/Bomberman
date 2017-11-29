@@ -13,14 +13,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-struct users *head = NULL;
-struct users *curr = NULL;
+int nr_users = 0;
+users user[20];
 
-struct usersActive *active_head = NULL;
-struct usersActive *active_curr = NULL;
+int nr_active_users = 0;
+usersActive active_user[20];
 
 void *receiver(void *arg) {
-  struct usersActive receivedCredentials;
+  usersActive receivedCredentials;
   int fd, fd_send;
   bool stop = false;
   char pipe[10], msg[1024];
@@ -34,25 +34,40 @@ void *receiver(void *arg) {
     sprintf(pipe, "pipe-%d", receivedCredentials.pid);
     fd_send = open(pipe, O_WRONLY, 0600);
 
-    /* 0 - not logged */
-    if (check_if_user_is_logged(receivedCredentials.username) == 0) {
-      if (validate(receivedCredentials.username,
-                   receivedCredentials.password) == 1) {
-        printf("\n%d -> %s iniciou sessão\n", receivedCredentials.pid,
-               receivedCredentials.username);
-        strcpy(msg, "Sessão iniciada com sucesso\n");
-        add_to_active_users_list(receivedCredentials.pid,
-                                 receivedCredentials.username);
+    switch (receivedCredentials.action) {
+    case 1:
+      /* 0 - not logged */
+      if (check_if_user_is_logged(receivedCredentials.username) == 0) {
+        if (validate(receivedCredentials.username,
+                     receivedCredentials.password) == 1) {
+          printf("\n%d -> %s iniciou sessão\n", receivedCredentials.pid,
+                 receivedCredentials.username);
+          strcpy(msg, "Sessão iniciada com sucesso\n");
+          add_to_active_users_list(receivedCredentials.pid,
+                                   receivedCredentials.username);
+        } else {
+          sprintf(msg,
+                  "\n%d -> %s tentou iniciar sessão, credênciais erradas\n",
+                  receivedCredentials.pid, receivedCredentials.username);
+          strcpy(msg, "Username ou password errados\n");
+        }
       } else {
-        sprintf(msg, "\n%d -> %s tentou iniciar sessão, credênciais erradas\n",
-                receivedCredentials.pid, receivedCredentials.username);
-        strcpy(msg, "Username ou password errados\n");
+        strcpy(msg, "O utilizadorja está logado\n");
       }
-    } else {
-      strcpy(msg, "O utilizadorja está logado\n");
+      write(fd_send, msg, sizeof(msg));
+      break;
+    case 2:
+      if (check_if_user_is_logged(
+              get_username_from_pid(receivedCredentials.pid)) == 1) {
+        /* User left */
+        printf("O cliente %d -> %s saiu do jogo!\n", receivedCredentials.pid,
+               get_username_from_pid(receivedCredentials.pid));
+        delete_from_active_users_list(receivedCredentials.pid);
+      }
+    default:
+      break;
     }
 
-    write(fd_send, msg, sizeof(msg));
   } while (stop == false);
   close(fd);
   pthread_exit(0);
@@ -89,7 +104,7 @@ void keyboard(char *cmd) {
 
   if (strcmp(arg[0], "add") == 0) {
     if (arg[1] != NULL && arg[2] != NULL) {
-      adduser(arg[1], arg[2]);
+      add_user(arg[1], arg[2]);
     } else
       printf("Faltam argumentos\n");
   } else if (strcmp(arg[0], "shutdown") == 0) {
@@ -115,7 +130,7 @@ int main(int argc, char *argv[]) {
   pthread_t thread;
   char cmd[80];
   int fd_pipe, res;
-  struct usersActive active;
+  usersActive active;
 
   signal(SIGINT, SIGhandler);
 
