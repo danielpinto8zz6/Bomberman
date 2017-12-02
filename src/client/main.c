@@ -33,6 +33,9 @@ void *receiver(void *arg) {
     if (strcmp(msg, "exit") == 0) {
       printf("O servidor encerrou, a fechar pipe e sair...\n");
       forced_shutdown();
+    } else if (strcmp(msg, "kick") == 0) {
+      printf("O servidor kickou-o, a fechar pipe e sair...\n");
+      forced_shutdown();
     } else {
       printf("%s", msg);
     }
@@ -131,6 +134,10 @@ int main(int argc, char *argv[]) {
     printf("\nPassword : ");
     scanf(" %19[^\n]s", sendCredentials.password);
   } while (is_login_fields_valid(sendCredentials) == 0);
+  if (access(PIPE, F_OK) != 0) {
+    error("O servidor não se encontra em execução. A sair...\n");
+    exit(0);
+  }
   sendCredentials.action = 1;
   write(fd, &sendCredentials, sizeof(sendCredentials));
   sleep(2);

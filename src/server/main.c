@@ -19,6 +19,28 @@ users user[20];
 int nr_active_users = 0;
 usersActive active_user[20];
 
+void kick_user(char username[20]) {
+  char msg[8] = "kick";
+  char pipe[10];
+  int fd;
+  int found = 0;
+
+  for (int i = 0; i < nr_active_users; i++) {
+    if (strcmp(active_user[i].username, username) == 0) {
+      sprintf(pipe, "pipe-%d", active_user[i].pid);
+      delete_from_active_users_list(active_user[i].pid);
+      found = 1;
+    }
+  }
+  if (found == 1) {
+    fd = open(pipe, O_WRONLY, 0600);
+    write(fd, &msg, sizeof(msg));
+    close(fd);
+  } else {
+    printf("Utilizador não encontrado");
+  }
+}
+
 void *receiver(void *arg) {
   usersActive receivedCredentials;
   int fd, fd_send;
@@ -129,6 +151,11 @@ void keyboard(char *cmd) {
   } else if (strcmp(arg[0], "registered") == 0) {
     printf("Registered users : \n\n");
     print_users_list();
+  } else if (strcmp(arg[0], "kick") == 0) {
+    if (arg[1] != NULL) {
+      kick_user(arg[1]);
+    } else
+      printf("Faltam argumentos\n");
   } else {
     printf("Comando inválido!\n");
     printf("Insira <help> para ver a lista de comandos disponíveis\n");
