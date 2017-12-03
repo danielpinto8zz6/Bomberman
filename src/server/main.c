@@ -5,7 +5,6 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,9 +42,8 @@ void kick_user(char username[20]) {
 
 void *receiver(void *arg) {
   usersActive receivedCredentials;
-  int fd, fd_send;
-  bool stop = false;
-  char pipe[10], msg[1024];
+  int fd, fd_send, msg = 0, stop = 0;
+  char pipe[10];
 
   mkfifo(PIPE, 0600);
   fd = open(PIPE, O_RDWR);
@@ -64,19 +62,16 @@ void *receiver(void *arg) {
                      receivedCredentials.password) == 1) {
           printf("\n%d -> %s iniciou sessão\n", receivedCredentials.pid,
                  receivedCredentials.username);
-          strcpy(msg, "Sessão iniciada com sucesso\n");
           add_to_active_users_list(receivedCredentials.pid,
                                    receivedCredentials.username);
+          msg = 3;
         } else {
-          sprintf(msg,
-                  "\n%d -> %s tentou iniciar sessão, credênciais erradas\n",
-                  receivedCredentials.pid, receivedCredentials.username);
-          strcpy(msg, "Username ou password errados\n");
+          msg = 4;
         }
       } else {
-        strcpy(msg, "O utilizadorja está logado\n");
+        msg = 5;
       }
-      write(fd_send, msg, sizeof(msg));
+      write(fd_send, &msg, sizeof(msg));
       break;
     case 2:
       if (check_if_user_is_logged(
@@ -90,7 +85,7 @@ void *receiver(void *arg) {
       break;
     }
 
-  } while (stop == false);
+  } while (stop == 0);
   close(fd);
   pthread_exit(0);
 }

@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+int logged = 0;
+
 void forced_shutdown() {
   char pipe[10];
   sprintf(pipe, "pipe-%d", getpid());
@@ -19,9 +21,7 @@ void forced_shutdown() {
 
 void *receiver(void *arg) {
   char pipe[10];
-  int fd_pipe;
-  int stop = 0;
-  char msg[1024];
+  int fd_pipe, stop = 0, msg;
 
   sprintf(pipe, "pipe-%d", getpid());
   mkfifo(pipe, 0600);
@@ -30,14 +30,27 @@ void *receiver(void *arg) {
 
   do {
     read(fd_pipe, &msg, sizeof(msg));
-    if (strcmp(msg, "exit") == 0) {
+
+    switch (msg) {
+    case 1: /* exit */
       printf("O servidor encerrou, a fechar pipe e sair...\n");
       forced_shutdown();
-    } else if (strcmp(msg, "kick") == 0) {
+      break;
+    case 2: /* kick */
       printf("O servidor kickou-o, a fechar pipe e sair...\n");
       forced_shutdown();
-    } else {
-      printf("%s", msg);
+      break;
+    case 3: /* Login sucefully */
+      printf("Sessão iniciada com sucesso\n");
+      logged = 1;
+      break;
+    case 4: /* User or pass wrong*/
+      printf("Username ou password errados\n");
+      break;
+    case 5: /* user already logged */
+      printf("O utilizadorja está logado\n");
+    default:
+      break;
     }
   } while (stop == 0);
 
@@ -71,15 +84,18 @@ void shutdown() {
 
   char pipe[10];
   int fd;
-
-  sendData.pid = getpid();
-  sendData.action = 2;
-  sprintf(pipe, "pipe-%d", getpid());
-  fd = open(PIPE, O_WRONLY, 0600);
-  write(fd, &sendData, sizeof(sendData));
-  unlink(pipe);
-  printf("Programa terminado\n");
-  exit(0);
+  if (logged == 1) {
+    sendData.pid = getpid();
+    sendData.action = 2;
+    sprintf(pipe, "pipe-%d", getpid());
+    fd = open(PIPE, O_WRONLY, 0600);
+    write(fd, &sendData, sizeof(sendData));
+    unlink(pipe);
+    printf("Programa terminado\n");
+    exit(0);
+  } else {
+    forced_shutdown();
+  }
 }
 
 void SIGhandler(int sig) {
@@ -128,19 +144,21 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
   do {
-    printf("#### LOGIN ####\n\n");
-    printf("\nUsername : ");
-    scanf(" %19[^\n]s", sendCredentials.username);
-    printf("\nPassword : ");
-    scanf(" %19[^\n]s", sendCredentials.password);
-  } while (is_login_fields_valid(sendCredentials) == 0);
-  if (access(PIPE, F_OK) != 0) {
-    error("O servidor não se encontra em execução. A sair...\n");
-    exit(0);
-  }
-  sendCredentials.action = 1;
-  write(fd, &sendCredentials, sizeof(sendCredentials));
-  sleep(2);
+    do {
+      printf("\n#### LOGIN ####\n");
+      printf("\nUsername : ");
+      scanf(" %19[^\n]s", sendCredentials.username);
+      printf("\nPassword : ");
+      scanf(" %19[^\n]s", sendCredentials.password);
+    } while (is_login_fields_valid(sendCredentials) == 0);
+    if (access(PIPE, F_OK) != 0) {
+      error("O servidor não se encontra em execução. A sair...\n");
+      exit(0);
+    }
+    sendCredentials.action = 1;
+    write(fd, &sendCredentials, sizeof(sendCredentials));
+    sleep(2);
+  } while (logged == 0);
 
   pthread_join(task, NULL);
   close(fd);
