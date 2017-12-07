@@ -1,4 +1,5 @@
 #include "../structs.h"
+#include "main.h"
 #include "activeusers.h"
 #include "login.h"
 #include "users.h"

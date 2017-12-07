@@ -1,4 +1,5 @@
 #include "../structs.h"
+#include "activeusers.h"
 #include "main.h"
 #include <stdbool.h>
 #include <stdio.h>

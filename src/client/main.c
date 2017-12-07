@@ -1,4 +1,5 @@
 #include "../structs.h"
+#include "main.h"
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
