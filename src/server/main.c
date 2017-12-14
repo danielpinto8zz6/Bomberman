@@ -1,7 +1,7 @@
 #include "../structs.h"
-#include "main.h"
 #include "activeusers.h"
 #include "login.h"
+#include "main.h"
 #include "users.h"
 #include <fcntl.h>
 #include <pthread.h>
@@ -95,7 +95,7 @@ void shutdown() {
   char pipe[10];
   int fd;
 
-  char msg[8] = "exit";
+  int msg = 1;
   for (int i = 0; i < nr_active_users; i++) {
     sprintf(pipe, "pipe-%d", active_user[i].pid);
     fd = open(pipe, O_WRONLY, 0600);
