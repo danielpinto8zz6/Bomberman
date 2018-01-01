@@ -1,4 +1,5 @@
 #include "../structs.h"
+#include "game.h"
 #include "main.h"
 #include <fcntl.h>
 #include <pthread.h>
@@ -44,6 +45,8 @@ void *receiver(void *arg) {
     case 3: /* Login sucefully */
       printf("Sessão iniciada com sucesso\n");
       logged = 1;
+      system("clear");
+      game();
       break;
     case 4: /* User or pass wrong*/
       printf("Username ou password errados\n");
