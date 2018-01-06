@@ -1,5 +1,5 @@
 #include "../structs.h"
-#include "game.h"
+#include "board.h"
 #include "main.h"
 #include <fcntl.h>
 #include <pthread.h>
@@ -46,7 +46,7 @@ void *receiver(void *arg) {
       printf("Sessão iniciada com sucesso\n");
       logged = 1;
       system("clear");
-      game();
+      create_board();
       break;
     case 4: /* User or pass wrong*/
       printf("Username ou password errados\n");
@@ -94,6 +94,7 @@ void shutdown() {
     sprintf(pipe, "pipe-%d", getpid());
     fd = open(PIPE, O_WRONLY, 0600);
     write(fd, &sendData, sizeof(sendData));
+    endwin();
     unlink(pipe);
     printf("Programa terminado\n");
     exit(0);

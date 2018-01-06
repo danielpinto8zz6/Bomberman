@@ -13,12 +13,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-int nr_users = 0;
-users user[20];
-
-int nr_active_users = 0;
-usersActive active_user[20];
-
 void kick_user(char username[20]) {
   char msg[8] = "kick";
   char pipe[10];

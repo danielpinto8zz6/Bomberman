@@ -4,7 +4,3 @@ void keyboard(char *cmd);
 void SIGhandler(int sig);
 void shutdown();
 void *receiver(void *arg);
-extern usersActive active_user[20];
-extern int nr_active_users;
-extern users user[20];
-extern int nr_users;
