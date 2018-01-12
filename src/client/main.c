@@ -1,7 +1,7 @@
 #include "../structs.h"
-#include "board.h"
 #include "main.h"
 #include <fcntl.h>
+#include <ncurses.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdio.h>
@@ -11,19 +11,109 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+WINDOW *win;
+
 int logged = 0;
+
+void place_in_board(int y, int x, char type) {
+  x++;
+  y++;
+  mvwprintw(win, y, x, "%c", type);
+}
+
+void clean_board() {
+  for (int y = 0; y < HEIGHT; y++) {
+    for (int x = 0; x < WIDTH; x++) {
+      place_in_board(y, x, ' ');
+    }
+  }
+}
+
+void update_board(usersActive game) {
+  clean_board();
+  for (int y = 0; y < HEIGHT; y++) {
+    for (int x = 0; x < WIDTH; x++) {
+      place_in_board(y, x, game.board.board[y][x]);
+    }
+  }
+  wrefresh(win);
+}
+
+WINDOW *create_win(int height, int width, int starty, int startx) {
+  WINDOW *local_win = newwin(height, width, starty, startx);
+  box(local_win, 0, 0);
+  wrefresh(local_win);
+
+  return (local_win);
+}
+
+void create_board() {
+  usersActive game;
+
+  game.pid = getpid();
+
+  int fd = open(PIPE, O_RDWR);
+
+  int ch;
+
+  initscr();
+
+  start_color();
+
+  init_pair(1, COLOR_WHITE, COLOR_BLACK);
+
+  attron(COLOR_PAIR(1));
+
+  cbreak();
+  keypad(stdscr, TRUE);
+  noecho();
+
+  printw("Press q to exit");
+  refresh();
+  win = create_win(HEIGHT + 2, WIDTH + 2, 1, 1);
+  curs_set(0);
+
+  wrefresh(win);
+
+  while ((ch = getch()) != 'q') {
+    switch (ch) {
+    case KEY_LEFT:
+      game.action = LEFT;
+      write(fd, &game, sizeof(game));
+      break;
+    case KEY_RIGHT:
+      game.action = RIGHT;
+      write(fd, &game, sizeof(game));
+      break;
+    case KEY_UP:
+      game.action = UP;
+      write(fd, &game, sizeof(game));
+      break;
+    case KEY_DOWN:
+      game.action = DOWN;
+      write(fd, &game, sizeof(game));
+      break;
+    }
+    wrefresh(win);
+  }
+
+  endwin();
+}
 
 void forced_shutdown() {
   char pipe[10];
   sprintf(pipe, "pipe-%d", getpid());
   unlink(pipe);
   printf("Programa terminado\n");
+  endwin();
   exit(0);
 }
 
 void *receiver(void *arg) {
   char pipe[10];
-  int fd_pipe, stop = 0, msg;
+  int fd_pipe, stop = 0;
+
+  usersActive receive;
 
   sprintf(pipe, "pipe-%d", getpid());
   mkfifo(pipe, 0600);
@@ -31,28 +121,28 @@ void *receiver(void *arg) {
   fd_pipe = open(pipe, O_RDWR);
 
   do {
-    read(fd_pipe, &msg, sizeof(msg));
+    read(fd_pipe, &receive, sizeof(receive));
 
-    switch (msg) {
-    case 1: /* exit */
+    switch (receive.action) {
+    case SERVER_SHUTDOWN: /* exit */
       printf("O servidor encerrou, a fechar pipe e sair...\n");
       forced_shutdown();
       break;
-    case 2: /* kick */
+    case KICK: /* kick */
       printf("O servidor kickou-o, a fechar pipe e sair...\n");
       forced_shutdown();
       break;
-    case 3: /* Login sucefully */
-      printf("Sessão iniciada com sucesso\n");
+    case LOGGED: /* Login sucefully */
+      // printf("Sessão iniciada com sucesso\n");
       logged = 1;
-      system("clear");
-      create_board();
       break;
-    case 4: /* User or pass wrong*/
+    case WRONG_CREDENTIALS: /* User or pass wrong*/
       printf("Username ou password errados\n");
       break;
-    case 5: /* user already logged */
+    case ALREADY_LOGGED: /* user already logged */
       printf("O utilizadorja está logado\n");
+    case UPDATE: /* Update Board */
+      update_board(receive);
     default:
       break;
     }
@@ -84,16 +174,15 @@ int is_login_fields_valid(usersActive active) {
 }
 
 void shutdown() {
-  usersActive sendData;
-
   char pipe[10];
   int fd;
+  usersActive send;
   if (logged == 1) {
-    sendData.pid = getpid();
-    sendData.action = 2;
+    send.pid = getpid();
+    send.action = 2;
     sprintf(pipe, "pipe-%d", getpid());
     fd = open(PIPE, O_WRONLY, 0600);
-    write(fd, &sendData, sizeof(sendData));
+    write(fd, &send, sizeof(send));
     endwin();
     unlink(pipe);
     printf("Programa terminado\n");
@@ -111,11 +200,10 @@ void SIGhandler(int sig) {
 void error(char *msg) { printf("%s", msg); }
 
 int main(int argc, char *argv[]) {
-
-  usersActive sendCredentials;
   int fd, res;
   char pipe[20];
   pthread_t task;
+  usersActive send;
 
   signal(SIGINT, SIGhandler);
 
@@ -126,8 +214,8 @@ int main(int argc, char *argv[]) {
     exit(0);
   }
 
-  sendCredentials.pid = getpid();
-  sprintf(pipe, "pipe-%d", sendCredentials.pid);
+  send.pid = getpid();
+  sprintf(pipe, "pipe-%d", send.pid);
 
   if (mkfifo(pipe, S_IRWXU) < 0) {
     error("Erro ao criar pipe. A sair...\n");
@@ -152,18 +240,20 @@ int main(int argc, char *argv[]) {
     do {
       printf("\n#### LOGIN ####\n");
       printf("\nUsername : ");
-      scanf(" %19[^\n]s", sendCredentials.username);
+      scanf(" %19[^\n]s", send.username);
       printf("\nPassword : ");
-      scanf(" %19[^\n]s", sendCredentials.password);
-    } while (is_login_fields_valid(sendCredentials) == 0);
+      scanf(" %19[^\n]s", send.password);
+    } while (is_login_fields_valid(send) == 0);
     if (access(PIPE, F_OK) != 0) {
       error("O servidor não se encontra em execução. A sair...\n");
       exit(0);
     }
-    sendCredentials.action = 1;
-    write(fd, &sendCredentials, sizeof(sendCredentials));
+    send.action = LOGIN;
+    write(fd, &send, sizeof(send));
     sleep(2);
   } while (logged == 0);
+  if (logged == 1)
+    create_board();
 
   pthread_join(task, NULL);
   close(fd);

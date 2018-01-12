@@ -35,5 +35,6 @@ void delete_from_active_users_list(int pid) {
 }
 void print_active_users_list() {
   for (int i = 0; i < nr_active_users; i++)
-    printf("%d -> %s\n", active_user[i].pid, active_user[i].username);
+    printf("%d -> %s (%d, %d)\n", active_user[i].pid, active_user[i].username,
+           active_user[i].x, active_user[i].y);
 }
