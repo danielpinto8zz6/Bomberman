@@ -16,6 +16,8 @@
 #define KICK 11
 #define SERVER_SHUTDOWN 12
 #define MAX_ACTIVE_USERS_EXCEEDED 13
+#define MINIBOMB 14
+#define BIGBOMB 15
 
 typedef struct {
   char username[20];
@@ -24,6 +26,7 @@ typedef struct {
 
 typedef struct {
   char board[HEIGHT][WIDTH];
+  char users[HEIGHT][WIDTH];
 } Board;
 
 typedef struct {
@@ -35,4 +38,6 @@ typedef struct {
   int x;
   int y;
   int pontuation;
+  int minibombs;
+  int bigbombs;
 } usersActive;

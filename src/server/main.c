@@ -22,12 +22,20 @@ usersActive active_user[20];
 
 int game = 0;
 
+bool map_loaded = false;
+
 Board b;
 
 typedef struct {
   int x;
   int y;
 } coordinates;
+
+void start_players_positions() {
+  for (int y = 0; y < HEIGHT; y++)
+    for (int x = 0; x < WIDTH; x++)
+      b.users[y][x] = ' ';
+}
 
 bool check_if_users_exceeds_max_active() {
   const char *env = getenv("NMAXPLAY");
@@ -43,13 +51,18 @@ bool check_if_users_exceeds_max_active() {
     return false;
 }
 
-int random_number(int max) {
-  srand(time(NULL));
+int random_number(int limit) {
+  int divisor = RAND_MAX / (limit + 1);
+  int retval;
 
-  return rand() % max + 0;
+  do {
+    retval = rand() / divisor;
+  } while (retval > limit);
+
+  return retval;
 }
 
-int game_enemies() {
+int get_game_enemies() {
   int enermies = 0;
   const char *env = getenv("NENEMY");
   if (env != NULL) {
@@ -60,7 +73,7 @@ int game_enemies() {
   return enermies;
 }
 
-int game_objects() {
+int get_game_objects() {
   int objects = 0;
   const char *env = getenv("NOBJECT");
   if (env != NULL) {
@@ -95,10 +108,122 @@ bool load_board(char *filename) {
   return true;
 }
 
+int get_empty_positions_number() {
+  int i = 0;
+  for (int y = 0; y < HEIGHT; y++) {
+    for (int x = 0; x < WIDTH; x++) {
+      if (b.board[y][x] == ' ') {
+        i++;
+      }
+    }
+  }
+  return i;
+}
+
+void *get_empty_positions(int count) {
+  coordinates *empty = NULL;
+  empty = malloc(sizeof(empty) * count);
+
+  int i = 0;
+
+  if (!empty)
+    return NULL;
+
+  for (int y = 0; y < HEIGHT; y++) {
+    for (int x = 0; x < WIDTH; x++) {
+      if (b.board[y][x] == ' ') {
+        empty[i].x = x;
+        empty[i].y = y;
+        i++;
+      }
+    }
+  }
+
+  return empty;
+}
+
+void place_objects() {
+  int objects = get_game_objects();
+
+  int x = 0;
+  int y = 0;
+  int random = 0;
+
+  for (int j = 0; j < objects; j++) {
+    int i = get_empty_positions_number();
+    coordinates *empty_positions = get_empty_positions(i);
+    if (empty_positions) {
+      free(empty_positions);
+    }
+    random = random_number(i);
+    x = empty_positions[random].x;
+    y = empty_positions[random].y;
+    b.board[y][x] = 'O';
+  }
+}
+
 void fill_board() {
-  for (int y = 0; y < HEIGHT; y++)
-    for (int x = 0; x < WIDTH; x++)
-      b.board[y][x] = ' ';
+  if (map_loaded == true) {
+    return;
+  } else {
+    char board[HEIGHT][WIDTH] = {
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', '&', '&', '&', '&', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#',
+        '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '&', '&', '&', '&', '&', ' ',
+        ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', '#', '#',
+        '#', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#',
+        ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', '&', '&', ' ', ' ', ' ', ' ',
+        '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        '#', '#', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ',
+        ' ', ' ', '&', '&', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', '&', '&', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#', '#',
+        ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        '#', '#', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '#',
+        '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', '#', '#', '#', '#', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+    };
+
+    for (int y = 0; y < HEIGHT; y++)
+      for (int x = 0; x < WIDTH; x++)
+        b.board[y][x] = board[y][x];
+  }
+}
+
+void load_game() {
+  start_players_positions();
+  fill_board();
+  place_objects();
 }
 
 void set_player_position(int pid, int x, int y) {
@@ -106,7 +231,7 @@ void set_player_position(int pid, int x, int y) {
     if (active_user[i].pid == pid) {
       active_user[i].x = x;
       active_user[i].y = y;
-      b.board[y][x] = '*';
+      b.users[y][x] = '*';
     }
   }
 }
@@ -136,7 +261,7 @@ bool check_occupied(int pos_x, int pos_y) {
   for (int y = 0; y < HEIGHT; y++) {
     for (int x = 0; x < WIDTH; x++) {
       if (pos_x == x && pos_y == y) {
-        if (b.board[y][x] == '#' || b.board[y][x] == '*') {
+        if (b.board[y][x] == '#' || b.board[y][x] == '&' || b.users[y][x] == '*') {
           return true;
         }
       }
@@ -158,9 +283,10 @@ void player_move(int move, int pid) {
     if (y >= 0 && check_occupied(x, y) == false) {
       if (b.board[y][x] == 'O') {
         active_user[i].pontuation++;
+        b.board[y][x] = ' ';
       }
-      b.board[y][x] = '*';
-      b.board[pos.y][x] = ' ';
+      b.users[y][x] = '*';
+      b.users[pos.y][x] = ' ';
       active_user[i].y = y;
     }
     break;
@@ -170,9 +296,10 @@ void player_move(int move, int pid) {
     if (y < HEIGHT && check_occupied(x, y) == false) {
       if (b.board[y][x] == 'O') {
         active_user[i].pontuation++;
+        b.board[y][x] = ' ';
       }
-      b.board[y][x] = '*';
-      b.board[pos.y][x] = ' ';
+      b.users[y][x] = '*';
+      b.users[pos.y][x] = ' ';
       active_user[i].y = y;
     }
     break;
@@ -182,9 +309,10 @@ void player_move(int move, int pid) {
     if (x >= 0 && check_occupied(x, y) == false) {
       if (b.board[y][x] == 'O') {
         active_user[i].pontuation++;
+        b.board[y][x] = ' ';
       }
-      b.board[y][x] = '*';
-      b.board[y][pos.x] = ' ';
+      b.users[y][x] = '*';
+      b.users[y][pos.x] = ' ';
       active_user[i].x = x;
     }
     break;
@@ -194,10 +322,23 @@ void player_move(int move, int pid) {
     if (x < WIDTH && check_occupied(x, y) == false) {
       if (b.board[y][x] == 'O') {
         active_user[i].pontuation++;
+        b.board[y][x] = ' ';
       }
-      b.board[y][x] = '*';
-      b.board[y][pos.x] = ' ';
+      b.users[y][x] = '*';
+      b.users[y][pos.x] = ' ';
       active_user[i].x = x;
+    }
+    break;
+  case BIGBOMB:
+    if (active_user[i].bigbombs > 0) {
+      active_user[i].bigbombs--;
+      b.board[y][x] = 'B';
+    }
+    break;
+  case MINIBOMB:
+    if (active_user[i].minibombs > 0) {
+      active_user[i].minibombs--;
+      b.board[y][x] = 'b';
     }
     break;
   }
@@ -236,6 +377,8 @@ void send_update(int pid) {
   send.action = UPDATE;
   send.board = b;
   send.pontuation = active_user[i].pontuation;
+  send.minibombs = active_user[i].minibombs;
+  send.bigbombs = active_user[i].bigbombs;
 
   sprintf(pipe, "pipe-%d", pid);
   fd = open(pipe, O_WRONLY, 0600);
@@ -295,6 +438,8 @@ void *receiver(void *arg) {
             set_player_position(receive.pid, c.x, c.y);
             coordinates pos = get_player_position(receive.pid);
             active_user[get_user_position(receive.pid)].pontuation = 0;
+            active_user[get_user_position(receive.pid)].minibombs = 3;
+            active_user[get_user_position(receive.pid)].bigbombs = 2;
             send.x = pos.x;
             send.y = pos.y;
             send.action = LOGGED;
@@ -333,6 +478,14 @@ void *receiver(void *arg) {
       break;
     case RIGHT:
       player_move(RIGHT, receive.pid);
+      update_all_users();
+      break;
+    case BIGBOMB:
+      player_move(BIGBOMB, receive.pid);
+      update_all_users();
+      break;
+    case MINIBOMB:
+      player_move(MINIBOMB, receive.pid);
       update_all_users();
       break;
     }
@@ -407,8 +560,10 @@ void keyboard(char *cmd) {
       printf("Faltam argumentos\n");
   } else if (strcmp(arg[0], "map") == 0) {
     if (arg[1] != NULL) {
-      if (load_board(arg[1]))
+      if (load_board(arg[1])) {
         printf("Mapa carregado com sucesso\n");
+        map_loaded = true;
+      }
     }
   } else {
     printf("Comando inválido!\n");
@@ -424,8 +579,6 @@ int main(int argc, char *argv[]) {
   char cmd[80];
   int fd_pipe, res;
   usersActive active;
-
-  fill_board();
 
   signal(SIGINT, SIGhandler);
   signal(SIGUSR1, SIGhandler);
@@ -450,6 +603,8 @@ int main(int argc, char *argv[]) {
   }
 
   printf("Servidor iniciado!\n");
+
+  load_game();
 
   res = pthread_create(&thread, NULL, &receiver, NULL);
 

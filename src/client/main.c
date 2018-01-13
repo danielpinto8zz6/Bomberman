@@ -39,7 +39,18 @@ void update_board(usersActive game) {
       place_in_board(y, x, game.board.board[y][x]);
     }
   }
-  mvwprintw(info, 3, 13, "%d", game.pontuation);
+  for (int y = 0; y < HEIGHT; y++) {
+    for (int x = 0; x < WIDTH; x++) {
+      if (game.board.users[y][x] == '*')
+        place_in_board(y, x, game.board.users[y][x]);
+    }
+  }
+  mvwprintw(info, 3, 9, "\t");
+  mvwprintw(info, 5, 14, "\t");
+  mvwprintw(info, 7, 13, "\t");
+  mvwprintw(info, 3, 9, "%d", game.pontuation);
+  mvwprintw(info, 5, 14, "%d", game.bigbombs);
+  mvwprintw(info, 7, 13, "%d", game.minibombs);
   wrefresh(info);
   wrefresh(win);
 }
@@ -75,7 +86,9 @@ void create_board() {
   refresh();
   win = create_win(HEIGHT + 2, WIDTH + 2, 1, 1);
 
-  info = create_win(HEIGHT + 2, WIDTH + 2, 1, WIDTH + 4);
+  info = newwin(HEIGHT + 2, 50, 1, WIDTH + 4);
+
+  wrefresh(info);
 
   curs_set(0);
 
@@ -83,7 +96,12 @@ void create_board() {
   wrefresh(info);
 
   mvwprintw(info, 1, 1, "Score");
-  mvwprintw(info, 3, 1, "Pontuation:");
+  mvwprintw(info, 3, 1, "Pontos:");
+  mvwprintw(info, 5, 1, "Mega Bombas:");
+  mvwprintw(info, 7, 1, "Bombinnhas:");
+  mvwprintw(info, 12, 1, "Para mover o jogador utilize as setas");
+  mvwprintw(info, 14, 1, "Para colocar uma mega bomba utilize o B");
+  mvwprintw(info, 16, 1, "Para colocar uma bombinha utilize o N");
 
   while ((ch = getch()) != 'q') {
     switch (ch) {
@@ -103,11 +121,20 @@ void create_board() {
       game.action = DOWN;
       write(fd, &game, sizeof(game));
       break;
+    case 'b':
+    case 'B':
+      game.action = BIGBOMB;
+      write(fd, &game, sizeof(game));
+      break;
+    case 'n':
+    case 'N':
+      game.action = MINIBOMB;
+      write(fd, &game, sizeof(game));
+      break;
     }
     wrefresh(win);
   }
-
-  endwin();
+  shutdown();
 }
 
 void forced_shutdown() {
@@ -159,7 +186,7 @@ void *receiver(void *arg) {
       refresh();
       break;
     case ALREADY_LOGGED: /* user already logged */
-      printw("O utilizadorja está logado\n");
+      printw("O utilizador ja esta logado\n");
       refresh();
     case UPDATE: /* Update Board */
       update_board(receive);
@@ -245,7 +272,9 @@ int main(int argc, char *argv[]) {
   init_pair(2, COLOR_WHITE, COLOR_BLUE);
 
   if (access(PIPE, F_OK) != 0) {
-    error("O servidor não se encontra em execução. A sair...\n");
+    error("O servidor nao se encontra em execucao. A sair...\n");
+    getch();
+    endwin();
     exit(0);
   }
 
@@ -254,6 +283,8 @@ int main(int argc, char *argv[]) {
 
   if (mkfifo(pipe, S_IRWXU) < 0) {
     error("Erro ao criar pipe. A sair...\n");
+    getch();
+    endwin();
     exit(0);
   }
 
@@ -262,6 +293,8 @@ int main(int argc, char *argv[]) {
   if (res != 0) {
     perror("ERRO!A criar a thread!!!\n");
     unlink(pipe);
+    getch();
+    endwin();
     exit(1);
   }
 
@@ -269,6 +302,8 @@ int main(int argc, char *argv[]) {
 
   if (fd == -1) {
     error("Erro ao criar pipe. A sair...\n");
+    getch();
+    endwin();
     exit(0);
   }
   do {
@@ -282,7 +317,7 @@ int main(int argc, char *argv[]) {
       scanw(" %19[^\n]s", send.password);
     } while (is_login_fields_valid(send) == 0);
     if (access(PIPE, F_OK) != 0) {
-      error("O servidor não se encontra em execução. A sair...\n");
+      error("O servidor nao se encontra em execucao. A sair...\n");
       exit(0);
     }
     send.action = LOGIN;
