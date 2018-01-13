@@ -20,12 +20,56 @@ users user[20];
 int nr_active_users;
 usersActive active_user[20];
 
+int game = 0;
+
 Board b;
 
 typedef struct {
   int x;
   int y;
 } coordinates;
+
+bool check_if_users_exceeds_max_active() {
+  const char *env = getenv("NMAXPLAY");
+  int max = 0;
+  if (env != NULL)
+    max = atoi(env);
+  else
+    max = 20;
+
+  if (nr_active_users + 1 > max)
+    return true;
+  else
+    return false;
+}
+
+int random_number(int max) {
+  srand(time(NULL));
+
+  return rand() % max + 0;
+}
+
+int game_enemies() {
+  int enermies = 0;
+  const char *env = getenv("NENEMY");
+  if (env != NULL) {
+    enermies = atoi(env) + game;
+  } else {
+    enermies = random_number(50) + game;
+  }
+  return enermies;
+}
+
+int game_objects() {
+  int objects = 0;
+  const char *env = getenv("NOBJECT");
+  if (env != NULL) {
+    objects = atoi(env) + game;
+  } else {
+    objects = random_number(50) + game;
+  }
+  return objects;
+}
 
 bool load_board(char *filename) {
   FILE *f;
@@ -239,21 +283,26 @@ void *receiver(void *arg) {
     switch (receive.action) {
     case LOGIN:
       if (check_if_user_is_logged(receive.username) == 0) {
-        if (validate(receive.username, receive.password) == 1) {
-          printf("\n%d -> %s iniciou sessão\n", receive.pid, receive.username);
-          add_to_active_users_list(receive.pid, receive.username);
+        if (check_if_users_exceeds_max_active() == false) {
+          if (validate(receive.username, receive.password) == 1) {
+            printf("\n%d -> %s iniciou sessão\n", receive.pid,
+                   receive.username);
+            add_to_active_users_list(receive.pid, receive.username);
 
-          /* To set player position when he logs, choose first empty position
-           * found */
-          coordinates c = get_first_empty_position_found();
-          set_player_position(receive.pid, c.x, c.y);
-          coordinates pos = get_player_position(receive.pid);
-          active_user[get_user_position(receive.pid)].pontuation = 0;
-          send.x = pos.x;
-          send.y = pos.y;
-          send.action = LOGGED;
+            /* To set player position when he logs, choose first empty position
+             * found */
+            coordinates c = get_first_empty_position_found();
+            set_player_position(receive.pid, c.x, c.y);
+            coordinates pos = get_player_position(receive.pid);
+            active_user[get_user_position(receive.pid)].pontuation = 0;
+            send.x = pos.x;
+            send.y = pos.y;
+            send.action = LOGGED;
+          } else {
+            send.action = WRONG_CREDENTIALS;
+          }
         } else {
-          send.action = WRONG_CREDENTIALS;
+          send.action = MAX_ACTIVE_USERS_EXCEEDED;
         }
       } else {
         send.action = ALREADY_LOGGED;
@@ -265,7 +314,10 @@ void *receiver(void *arg) {
         /* User left */
         printf("O cliente %d -> %s saiu do jogo!\n", receive.pid,
                get_username_from_pid(receive.pid));
+        int i = get_user_position(receive.pid);
+        b.board[active_user[i].y][active_user[i].x] = ' ';
         delete_from_active_users_list(receive.pid);
+        update_all_users();
       }
     case UP:
       player_move(UP, receive.pid);
@@ -376,6 +428,7 @@ int main(int argc, char *argv[]) {
   fill_board();
 
   signal(SIGINT, SIGhandler);
+  signal(SIGUSR1, SIGhandler);
 
   setbuf(stdout, NULL);
 

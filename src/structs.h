@@ -15,6 +15,7 @@
 #define ALREADY_LOGGED 10
 #define KICK 11
 #define SERVER_SHUTDOWN 12
+#define MAX_ACTIVE_USERS_EXCEEDED 13
 
 typedef struct {
   char username[20];

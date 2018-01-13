@@ -16,6 +16,8 @@ WINDOW *info;
 
 int logged = 0;
 
+usersActive receive;
+
 void place_in_board(int y, int x, char type) {
   x++;
   y++;
@@ -63,9 +65,6 @@ void create_board() {
 
   start_color();
 
-  init_pair(1, COLOR_WHITE, COLOR_BLACK);
-  init_pair(2, COLOR_WHITE, COLOR_RED);
-
   attron(COLOR_PAIR(1));
 
   cbreak();
@@ -77,13 +76,14 @@ void create_board() {
   win = create_win(HEIGHT + 2, WIDTH + 2, 1, 1);
 
   info = create_win(HEIGHT + 2, WIDTH + 2, 1, WIDTH + 4);
-  mvwprintw(info, 1, 1, "Score");
-  mvwprintw(info, 3, 1, "Pontuation:");
 
   curs_set(0);
 
   wrefresh(win);
   wrefresh(info);
+
+  mvwprintw(info, 1, 1, "Score");
+  mvwprintw(info, 3, 1, "Pontuation:");
 
   while ((ch = getch()) != 'q') {
     switch (ch) {
@@ -114,7 +114,9 @@ void forced_shutdown() {
   char pipe[10];
   sprintf(pipe, "pipe-%d", getpid());
   unlink(pipe);
-  printf("Programa terminado\n");
+  printw("Programa terminado! Pressione qualquer tecla para sair\n");
+  refresh();
+  getch();
   endwin();
   exit(0);
 }
@@ -122,8 +124,6 @@ void forced_shutdown() {
 void *receiver(void *arg) {
   char pipe[10];
   int fd_pipe, stop = 0;
-
-  usersActive receive;
 
   sprintf(pipe, "pipe-%d", getpid());
   mkfifo(pipe, 0600);
@@ -135,22 +135,32 @@ void *receiver(void *arg) {
 
     switch (receive.action) {
     case SERVER_SHUTDOWN: /* exit */
-      printf("O servidor encerrou, a fechar pipe e sair...\n");
+      clear();
+      printw("O servidor encerrou, a fechar pipe e sair...\n");
+      refresh();
       forced_shutdown();
       break;
     case KICK: /* kick */
-      printf("O servidor kickou-o, a fechar pipe e sair...\n");
+      clear();
+      printw("O servidor kickou-o, a fechar pipe e sair...\n");
       forced_shutdown();
       break;
+    case MAX_ACTIVE_USERS_EXCEEDED: /* Cant login, max exceeded */
+      clear();
+      printw("O utilizador nao pode iniciar sessao pois ultrapassa o numero "
+             "maximo de utilizadores ativos\n");
+      shutdown();
+      break;
     case LOGGED: /* Login sucefully */
-      // printf("Sessão iniciada com sucesso\n");
       logged = 1;
       break;
     case WRONG_CREDENTIALS: /* User or pass wrong*/
-      printf("Username ou password errados\n");
+      printw("Username ou password errados\n");
+      refresh();
       break;
     case ALREADY_LOGGED: /* user already logged */
-      printf("O utilizadorja está logado\n");
+      printw("O utilizadorja está logado\n");
+      refresh();
     case UPDATE: /* Update Board */
       update_board(receive);
     default:
@@ -177,8 +187,10 @@ int is_login_fields_valid(usersActive active) {
       status = 0;
   }
 
-  if (status == 0)
-    printf("O username e a password não podem conter espaços!\n\n");
+  if (status == 0) {
+    printw("O username e a password não podem conter espaços!\n\n");
+    refresh();
+  }
 
   return status;
 }
@@ -193,9 +205,12 @@ void shutdown() {
     sprintf(pipe, "pipe-%d", getpid());
     fd = open(PIPE, O_WRONLY, 0600);
     write(fd, &send, sizeof(send));
-    endwin();
     unlink(pipe);
-    printf("Programa terminado\n");
+    clear();
+    printw("Programa terminado! Pressione qualquer tecla para sair\n");
+    refresh();
+    getch();
+    endwin();
     exit(0);
   } else {
     forced_shutdown();
@@ -207,7 +222,10 @@ void SIGhandler(int sig) {
   shutdown();
 }
 
-void error(char *msg) { printf("%s", msg); }
+void error(char *msg) {
+  printw("%s", msg);
+  refresh();
+}
 
 int main(int argc, char *argv[]) {
   int fd, res;
@@ -218,6 +236,13 @@ int main(int argc, char *argv[]) {
   signal(SIGINT, SIGhandler);
 
   setbuf(stdout, NULL);
+
+  initscr();
+
+  start_color();
+
+  init_pair(1, COLOR_WHITE, COLOR_BLACK);
+  init_pair(2, COLOR_WHITE, COLOR_BLUE);
 
   if (access(PIPE, F_OK) != 0) {
     error("O servidor não se encontra em execução. A sair...\n");
@@ -248,11 +273,13 @@ int main(int argc, char *argv[]) {
   }
   do {
     do {
-      printf("\n#### LOGIN ####\n");
-      printf("\nUsername : ");
-      scanf(" %19[^\n]s", send.username);
-      printf("\nPassword : ");
-      scanf(" %19[^\n]s", send.password);
+      printw("\n#### LOGIN ####\n");
+      printw("\nUsername : ");
+      refresh();
+      scanw(" %19[^\n]s", send.username);
+      printw("\nPassword : ");
+      refresh();
+      scanw(" %19[^\n]s", send.password);
     } while (is_login_fields_valid(send) == 0);
     if (access(PIPE, F_OK) != 0) {
       error("O servidor não se encontra em execução. A sair...\n");
@@ -262,8 +289,11 @@ int main(int argc, char *argv[]) {
     write(fd, &send, sizeof(send));
     sleep(2);
   } while (logged == 0);
-  if (logged == 1)
+  if (logged == 1) {
+    endwin();
+    clear();
     create_board();
+  }
 
   pthread_join(task, NULL);
   close(fd);
