@@ -12,6 +12,7 @@
 #include <unistd.h>
 
 WINDOW *win;
+WINDOW *info;
 
 int logged = 0;
 
@@ -36,6 +37,8 @@ void update_board(usersActive game) {
       place_in_board(y, x, game.board.board[y][x]);
     }
   }
+  mvwprintw(info, 3, 13, "%d", game.pontuation);
+  wrefresh(info);
   wrefresh(win);
 }
 
@@ -61,6 +64,7 @@ void create_board() {
   start_color();
 
   init_pair(1, COLOR_WHITE, COLOR_BLACK);
+  init_pair(2, COLOR_WHITE, COLOR_RED);
 
   attron(COLOR_PAIR(1));
 
@@ -71,9 +75,15 @@ void create_board() {
   printw("Press q to exit");
   refresh();
   win = create_win(HEIGHT + 2, WIDTH + 2, 1, 1);
+
+  info = create_win(HEIGHT + 2, WIDTH + 2, 1, WIDTH + 4);
+  mvwprintw(info, 1, 1, "Score");
+  mvwprintw(info, 3, 1, "Pontuation:");
+
   curs_set(0);
 
   wrefresh(win);
+  wrefresh(info);
 
   while ((ch = getch()) != 'q') {
     switch (ch) {

@@ -27,6 +27,30 @@ typedef struct {
   int y;
 } coordinates;
 
+bool load_board(char *filename) {
+  FILE *f;
+  char c;
+  int y = 0, x = 0;
+
+  f = fopen(filename, "r");
+
+  if (!f) {
+    return false;
+  } else {
+    while ((c = fgetc(f)) != EOF) {
+
+      if (c == '\n') {
+        y++;
+        x = 0;
+      } else {
+        b.board[y][x] = c;
+        x++;
+      }
+    }
+  }
+  return true;
+}
+
 void fill_board() {
   for (int y = 0; y < HEIGHT; y++)
     for (int x = 0; x < WIDTH; x++)
@@ -88,6 +112,9 @@ void player_move(int move, int pid) {
     /* y-- */
     y--;
     if (y >= 0 && check_occupied(x, y) == false) {
+      if (b.board[y][x] == 'O') {
+        active_user[i].pontuation++;
+      }
       b.board[y][x] = '*';
       b.board[pos.y][x] = ' ';
       active_user[i].y = y;
@@ -97,6 +124,9 @@ void player_move(int move, int pid) {
     /* y++ */
     y++;
     if (y < HEIGHT && check_occupied(x, y) == false) {
+      if (b.board[y][x] == 'O') {
+        active_user[i].pontuation++;
+      }
       b.board[y][x] = '*';
       b.board[pos.y][x] = ' ';
       active_user[i].y = y;
@@ -106,6 +136,9 @@ void player_move(int move, int pid) {
     /* x-- */
     x--;
     if (x >= 0 && check_occupied(x, y) == false) {
+      if (b.board[y][x] == 'O') {
+        active_user[i].pontuation++;
+      }
       b.board[y][x] = '*';
       b.board[y][pos.x] = ' ';
       active_user[i].x = x;
@@ -115,6 +148,9 @@ void player_move(int move, int pid) {
     /* x++ */
     x++;
     if (x < WIDTH && check_occupied(x, y) == false) {
+      if (b.board[y][x] == 'O') {
+        active_user[i].pontuation++;
+      }
       b.board[y][x] = '*';
       b.board[y][pos.x] = ' ';
       active_user[i].x = x;
@@ -151,8 +187,11 @@ void send_update(int pid) {
   int fd;
   char pipe[10];
 
+  int i = get_user_position(pid);
+
   send.action = UPDATE;
   send.board = b;
+  send.pontuation = active_user[i].pontuation;
 
   sprintf(pipe, "pipe-%d", pid);
   fd = open(pipe, O_WRONLY, 0600);
@@ -168,6 +207,18 @@ void update_all_users() {
       send_update(active_user[i].pid);
     }
   }
+}
+
+coordinates get_first_empty_position_found() {
+  coordinates pos;
+  for (int y = 0; y < HEIGHT; y++)
+    for (int x = 0; x < WIDTH; x++)
+      if (b.board[y][x] == ' ') {
+        pos.y = y;
+        pos.x = x;
+        break;
+      }
+  return pos;
 }
 
 void *receiver(void *arg) {
@@ -191,8 +242,13 @@ void *receiver(void *arg) {
         if (validate(receive.username, receive.password) == 1) {
           printf("\n%d -> %s iniciou sessão\n", receive.pid, receive.username);
           add_to_active_users_list(receive.pid, receive.username);
-          set_player_position(receive.pid, 5, 5);
+
+          /* To set player position when he logs, choose first empty position
+           * found */
+          coordinates c = get_first_empty_position_found();
+          set_player_position(receive.pid, c.x, c.y);
           coordinates pos = get_player_position(receive.pid);
+          active_user[get_user_position(receive.pid)].pontuation = 0;
           send.x = pos.x;
           send.y = pos.y;
           send.action = LOGGED;
@@ -297,6 +353,11 @@ void keyboard(char *cmd) {
       kick_user(arg[1]);
     } else
       printf("Faltam argumentos\n");
+  } else if (strcmp(arg[0], "map") == 0) {
+    if (arg[1] != NULL) {
+      if (load_board(arg[1]))
+        printf("Mapa carregado com sucesso\n");
+    }
   } else {
     printf("Comando inválido!\n");
     printf("Insira <help> para ver a lista de comandos disponíveis\n");
