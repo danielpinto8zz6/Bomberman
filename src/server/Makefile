@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-c -Wall
 LDFLAGS=-pthread
-SOURCES=login.c  main.c  users.c activeusers.c
+SOURCES=login.c  main.c  users.c activeusers.c enemies.c bombs.c game.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=../../build/bombermanServer
 

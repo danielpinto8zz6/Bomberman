@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-c -Wall
 LDFLAGS=-pthread -lncurses
-SOURCES=main.c
+SOURCES=main.c game.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=../../build/bombermanClient
 
