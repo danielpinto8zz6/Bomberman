@@ -7,7 +7,6 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <signal.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,15 +25,63 @@ bool map_loaded = false;
 
 Board b;
 
-typedef struct {
-  int x;
-  int y;
-} coordinates;
+int bomb_x, bomb_y, bomb_type;
+
+void *thread_bomb(void *arg) {
+  // Bomb *bomb = (Bomb *)arg;
+  int x = bomb_x;
+  int y = bomb_y;
+  int type = bomb_type;
+  int x_plus_one = x + 1;
+
+  printf("Type: %d, X->%d, Y->%d\n", type, x, y);
+
+  sleep(2);
+
+  if (type == MINIBOMB) {
+    b.bombs[x_plus_one][y] = 'X';
+    b.bombs[x - 1][y] = 'X';
+    b.bombs[x][y + 1] = 'X';
+    b.bombs[x][y - 1] = 'X';
+    update_all_users();
+    sleep(2);
+    b.bombs[x][y] = ' ';
+    b.bombs[x + 1][y] = ' ';
+    b.bombs[x - 1][y] = ' ';
+    b.bombs[x][y + 1] = ' ';
+    b.bombs[x][y - 1] = ' ';
+  } else if (type == BIGBOMB) {
+    printf("Bigbomb");
+  }
+  pthread_exit(0);
+}
+
+void place_bomb(Bomb *bomb) {
+  pthread_t thread_bombs;
+
+  /* Vou usar variáveis globais visto que ao passar a estrutura com parametro
+   * está a perder dados */
+  bomb_x = bomb->x;
+  bomb_y = bomb->y;
+  bomb_type = bomb->type;
+
+  int res = pthread_create(&thread_bombs, NULL, thread_bomb, (void *)(bomb));
+
+  if (res != 0) {
+    perror("ERRO! A criar a thread!!!\n");
+  }
+}
 
 void start_players_positions() {
   for (int y = 0; y < HEIGHT; y++)
     for (int x = 0; x < WIDTH; x++)
       b.users[y][x] = ' ';
+}
+
+void start_bombs_positions() {
+  for (int y = 0; y < HEIGHT; y++)
+    for (int x = 0; x < WIDTH; x++)
+      b.bombs[y][x] = ' ';
 }
 
 bool check_if_users_exceeds_max_active() {
@@ -149,12 +196,13 @@ void place_objects() {
   int y = 0;
   int random = 0;
 
+  int i = get_empty_positions_number();
+  coordinates *empty_positions = get_empty_positions(i);
+  if (empty_positions) {
+    free(empty_positions);
+  }
+
   for (int j = 0; j < objects; j++) {
-    int i = get_empty_positions_number();
-    coordinates *empty_positions = get_empty_positions(i);
-    if (empty_positions) {
-      free(empty_positions);
-    }
     random = random_number(i);
     x = empty_positions[random].x;
     y = empty_positions[random].y;
@@ -222,6 +270,7 @@ void fill_board() {
 
 void load_game() {
   start_players_positions();
+  start_bombs_positions();
   fill_board();
   place_objects();
 }
@@ -261,7 +310,8 @@ bool check_occupied(int pos_x, int pos_y) {
   for (int y = 0; y < HEIGHT; y++) {
     for (int x = 0; x < WIDTH; x++) {
       if (pos_x == x && pos_y == y) {
-        if (b.board[y][x] == '#' || b.board[y][x] == '&' || b.users[y][x] == '*') {
+        if (b.board[y][x] == '#' || b.board[y][x] == '&' ||
+            b.users[y][x] == '*') {
           return true;
         }
       }
@@ -271,10 +321,10 @@ bool check_occupied(int pos_x, int pos_y) {
 }
 
 void player_move(int move, int pid) {
-  coordinates pos = get_player_position(pid);
   int i = get_user_position(pid);
-  int x = pos.x;
-  int y = pos.y;
+  int x = active_user[i].x;
+  int y = active_user[i].y;
+  Bomb bomb;
 
   switch (move) {
   case UP:
@@ -286,7 +336,7 @@ void player_move(int move, int pid) {
         b.board[y][x] = ' ';
       }
       b.users[y][x] = '*';
-      b.users[pos.y][x] = ' ';
+      b.users[active_user[i].y][x] = ' ';
       active_user[i].y = y;
     }
     break;
@@ -299,7 +349,7 @@ void player_move(int move, int pid) {
         b.board[y][x] = ' ';
       }
       b.users[y][x] = '*';
-      b.users[pos.y][x] = ' ';
+      b.users[active_user[i].y][x] = ' ';
       active_user[i].y = y;
     }
     break;
@@ -312,7 +362,7 @@ void player_move(int move, int pid) {
         b.board[y][x] = ' ';
       }
       b.users[y][x] = '*';
-      b.users[y][pos.x] = ' ';
+      b.users[y][active_user[i].x] = ' ';
       active_user[i].x = x;
     }
     break;
@@ -325,20 +375,33 @@ void player_move(int move, int pid) {
         b.board[y][x] = ' ';
       }
       b.users[y][x] = '*';
-      b.users[y][pos.x] = ' ';
+      b.users[y][active_user[i].x] = ' ';
       active_user[i].x = x;
     }
     break;
   case BIGBOMB:
     if (active_user[i].bigbombs > 0) {
-      active_user[i].bigbombs--;
-      b.board[y][x] = 'B';
+      /*You can't place a bomb on top of another */
+      if (b.bombs[y][x] != 'B' && b.bombs[y][x] != 'b') {
+        active_user[i].bigbombs--;
+        b.bombs[y][x] = 'B';
+        bomb.x = x;
+        bomb.y = y;
+        bomb.type = BIGBOMB;
+        place_bomb(&bomb);
+      }
     }
     break;
   case MINIBOMB:
     if (active_user[i].minibombs > 0) {
-      active_user[i].minibombs--;
-      b.board[y][x] = 'b';
+      if (b.bombs[y][x] != 'B' && b.bombs[y][x] != 'b') {
+        active_user[i].minibombs--;
+        b.bombs[y][x] = 'b';
+        bomb.x = x;
+        bomb.y = y;
+        bomb.type = MINIBOMB;
+        place_bomb(&bomb);
+      }
     }
     break;
   }
@@ -460,7 +523,7 @@ void *receiver(void *arg) {
         printf("O cliente %d -> %s saiu do jogo!\n", receive.pid,
                get_username_from_pid(receive.pid));
         int i = get_user_position(receive.pid);
-        b.board[active_user[i].y][active_user[i].x] = ' ';
+        b.users[active_user[i].y][active_user[i].x] = ' ';
         delete_from_active_users_list(receive.pid);
         update_all_users();
       }
@@ -482,11 +545,9 @@ void *receiver(void *arg) {
       break;
     case BIGBOMB:
       player_move(BIGBOMB, receive.pid);
-      update_all_users();
       break;
     case MINIBOMB:
       player_move(MINIBOMB, receive.pid);
-      update_all_users();
       break;
     }
 
@@ -582,6 +643,7 @@ int main(int argc, char *argv[]) {
 
   signal(SIGINT, SIGhandler);
   signal(SIGUSR1, SIGhandler);
+  signal(SIGHUP, SIGhandler);
 
   setbuf(stdout, NULL);
 

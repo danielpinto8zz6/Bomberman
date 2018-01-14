@@ -21,7 +21,25 @@ usersActive receive;
 void place_in_board(int y, int x, char type) {
   x++;
   y++;
+  switch (type) {
+  case '*':
+    wattron(win, COLOR_PAIR(2));
+    break;
+  case 'X':
+    wattron(win, COLOR_PAIR(3));
+    break;
+  case '#':
+    wattron(win, COLOR_PAIR(4));
+    break;
+  case '&':
+    wattron(win, COLOR_PAIR(5));
+    break;
+  case 'O':
+    wattron(win, COLOR_PAIR(6));
+    break;
+  }
   mvwprintw(win, y, x, "%c", type);
+  wattron(win, COLOR_PAIR(1));
 }
 
 void clean_board() {
@@ -41,10 +59,18 @@ void update_board(usersActive game) {
   }
   for (int y = 0; y < HEIGHT; y++) {
     for (int x = 0; x < WIDTH; x++) {
+      if (game.board.bombs[y][x] == 'B' || game.board.bombs[y][x] == 'b' ||
+          game.board.bombs[y][x] == 'X')
+        place_in_board(y, x, game.board.bombs[y][x]);
+    }
+  }
+  for (int y = 0; y < HEIGHT; y++) {
+    for (int x = 0; x < WIDTH; x++) {
       if (game.board.users[y][x] == '*')
         place_in_board(y, x, game.board.users[y][x]);
     }
   }
+
   mvwprintw(info, 3, 9, "\t");
   mvwprintw(info, 5, 14, "\t");
   mvwprintw(info, 7, 13, "\t");
@@ -261,6 +287,8 @@ int main(int argc, char *argv[]) {
   usersActive send;
 
   signal(SIGINT, SIGhandler);
+  signal(SIGUSR1, SIGhandler);
+  signal(SIGHUP, SIGhandler);
 
   setbuf(stdout, NULL);
 
@@ -270,6 +298,10 @@ int main(int argc, char *argv[]) {
 
   init_pair(1, COLOR_WHITE, COLOR_BLACK);
   init_pair(2, COLOR_WHITE, COLOR_BLUE);
+  init_pair(3, COLOR_WHITE, COLOR_RED);
+  init_pair(4, COLOR_WHITE, COLOR_GREEN);
+  init_pair(5, COLOR_WHITE, COLOR_YELLOW);
+  init_pair(6, COLOR_WHITE, COLOR_MAGENTA);
 
   if (access(PIPE, F_OK) != 0) {
     error("O servidor nao se encontra em execucao. A sair...\n");

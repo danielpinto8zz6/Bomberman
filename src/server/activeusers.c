@@ -27,14 +27,24 @@ char *get_username_from_pid(int pid) {
 }
 
 void delete_from_active_users_list(int pid) {
-  int i;
-  for (i = 0; i < nr_active_users && active_user[i].pid != pid; i++)
-    ;
-  active_user[i] = active_user[nr_active_users - 1];
-  nr_active_users--;
+  usersActive null_users = {{0}};
+
+  if (nr_active_users > 0) {
+    if (nr_active_users == 1) {
+      active_user[0] = null_users;
+      nr_active_users--;
+    } else {
+      int i;
+      for (i = 0; i < nr_active_users && active_user[i].pid != pid; i++)
+        ;
+      active_user[i] = active_user[nr_active_users - 1];
+      nr_active_users--;
+    }
+  }
 }
+
 void print_active_users_list() {
   for (int i = 0; i < nr_active_users; i++)
-    printf("%d -> %s (%d, %d)\n", active_user[i].pid, active_user[i].username,
-           active_user[i].x, active_user[i].y);
+    printf("[%d] %d -> %s (%d, %d)\n", i, active_user[i].pid,
+           active_user[i].username, active_user[i].x, active_user[i].y);
 }

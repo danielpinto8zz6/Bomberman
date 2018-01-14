@@ -27,6 +27,7 @@ typedef struct {
 typedef struct {
   char board[HEIGHT][WIDTH];
   char users[HEIGHT][WIDTH];
+  char bombs[HEIGHT][WIDTH];
 } Board;
 
 typedef struct {
@@ -41,3 +42,14 @@ typedef struct {
   int minibombs;
   int bigbombs;
 } usersActive;
+
+typedef struct {
+  int x;
+  int y;
+} coordinates;
+
+typedef struct {
+  int x;
+  int y;
+  int type;
+} Bomb;
