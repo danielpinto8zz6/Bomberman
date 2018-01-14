@@ -1,5 +1,6 @@
 #include <stdbool.h>
 int main(int argc,char *argv[]);
+void player_lost(int x, int y);
 void error(char *msg);
 void keyboard(char *cmd);
 void SIGhandler(int sig);

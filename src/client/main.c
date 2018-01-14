@@ -39,6 +39,9 @@ void place_in_board(int y, int x, char type) {
   case 'O':
     wattron(win, COLOR_PAIR(6));
     break;
+  case '$':
+    wattron(win, COLOR_PAIR(7));
+    break;
   }
   mvwprintw(win, y, x, "%c", type);
   wattron(win, COLOR_PAIR(1));
@@ -68,7 +71,7 @@ void update_board(usersActive game) {
   }
   for (int y = 0; y < HEIGHT; y++) {
     for (int x = 0; x < WIDTH; x++) {
-      if (game.board.users[y][x] == '*')
+      if (game.board.users[y][x] == '*' || game.board.users[y][x] == '$')
         place_in_board(y, x, game.board.users[y][x]);
     }
   }
@@ -312,6 +315,7 @@ int main(int argc, char *argv[]) {
   init_pair(4, COLOR_WHITE, COLOR_GREEN);
   init_pair(5, COLOR_WHITE, COLOR_YELLOW);
   init_pair(6, COLOR_WHITE, COLOR_MAGENTA);
+  init_pair(7, COLOR_WHITE, COLOR_CYAN);
 
   if (access(PIPE, F_OK) != 0) {
     error("O servidor nao se encontra em execucao. A sair...\n");

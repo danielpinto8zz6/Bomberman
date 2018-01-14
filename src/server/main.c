@@ -27,6 +27,120 @@ Board b;
 
 int bomb_x, bomb_y, bomb_type;
 
+bool move_enemie(int i, int y, int x) {
+  switch (i) {
+  case 0:
+    if (b.board[y - 1][x] == ' ') {
+      if (b.users[y - 1][x] == '*') {
+        player_lost(x, y - 1);
+        b.users[y - 1][x] = '$';
+        b.users[y][x] = '$';
+      } else {
+        b.users[y - 1][x] = '$';
+        b.users[y][x] = '$';
+      }
+      return true;
+    } else {
+      return false;
+    }
+    break;
+  case 1:
+    if (b.board[y][x - 1] == ' ') {
+      if (b.users[y][x - 1] == '*') {
+        player_lost(x - 1, y);
+        b.users[y][x - 1] = '$';
+        b.users[y][x - 1] = '$';
+      } else {
+        b.users[y][x - 1] = '$';
+        b.users[y][x] = '$';
+      }
+      return true;
+    } else {
+      return false;
+    }
+    break;
+  case 2:
+    if (b.board[y + 1][x] == ' ') {
+      if (b.users[y + 1][x] == '*') {
+        player_lost(x, y + 1);
+        b.users[y + 1][x] = '$';
+        b.users[y][x] = '$';
+      } else {
+        b.users[y + 1][x] = '$';
+        b.users[y][x] = '$';
+      }
+      return true;
+    } else {
+      return false;
+    }
+    break;
+  case 3:
+    if (b.board[y][x + 1] == ' ') {
+      if (b.users[y][x + 1] == '*') {
+        player_lost(x + 1, y);
+        b.users[y][x + 1] = '$';
+        b.users[y][x + 1] = '$';
+      } else {
+        b.users[y][x + 1] = '$';
+        b.users[y][x] = '$';
+      }
+      return true;
+    } else {
+      return false;
+    }
+    break;
+  }
+  return false;
+}
+
+void enemie_move(int y, int x) {
+  int i = random_number(3);
+  bool b;
+
+  /*Caso a posição esteja ocupada procurar a primeira livre */
+  if (move_enemie(i, y, x) == false) {
+    b = move_enemie(0, y, x);
+    if (b == false) {
+      b = move_enemie(1, y, x);
+      if (b == false) {
+        b = move_enemie(2, y, x);
+        if (b == false) {
+          b = move_enemie(3, y, x);
+          if (b == false) {
+            return;
+          }
+        } else {
+          update_all_users();
+        }
+      } else {
+        update_all_users();
+      }
+    } else {
+      update_all_users();
+    }
+  } else {
+    update_all_users();
+  }
+}
+
+void show_game_info() {
+  for (int i = 0; i < nr_active_users; i++) {
+    if (active_user[i].playing == PLAYING) {
+      printf("%s - [%d, %d]\n", active_user[i].username, active_user[i].x,
+             active_user[i].y);
+      printf("\tBombinhas : %d\n", active_user[i].minibombs);
+      printf("\tMega Bombas : %d\n", active_user[i].minibombs);
+      printf("\tPontuacao : %d\n", active_user[i].pontuation);
+    }
+  }
+  int objects = 0;
+  for (int y = 0; y < HEIGHT; y++)
+    for (int x = 0; x < WIDTH; x++)
+      if (b.board[y][x] == 'O')
+        objects++;
+  printf("\nObjetos por apanhar : %d\n", objects);
+}
+
 void player_lost(int x, int y) {
   for (int i = 0; i < nr_active_users; i++) {
     if (active_user[i].x == x && active_user[i].y == y) {
@@ -359,52 +473,72 @@ void player_move(int move, int pid) {
     /* y-- */
     y--;
     if (y >= 0 && check_occupied(x, y) == false) {
-      if (b.board[y][x] == 'O') {
-        active_user[i].pontuation++;
-        b.board[y][x] = ' ';
+      if (b.users[x][y] == '$') {
+        b.users[active_user[i].y][x] = ' ';
+        player_lost(x, active_user[i].y);
+      } else {
+        if (b.board[y][x] == 'O') {
+          active_user[i].pontuation++;
+          b.board[y][x] = ' ';
+        }
+        b.users[y][x] = '*';
+        b.users[active_user[i].y][x] = ' ';
+        active_user[i].y = y;
       }
-      b.users[y][x] = '*';
-      b.users[active_user[i].y][x] = ' ';
-      active_user[i].y = y;
     }
     break;
   case DOWN:
     /* y++ */
     y++;
     if (y < HEIGHT && check_occupied(x, y) == false) {
-      if (b.board[y][x] == 'O') {
-        active_user[i].pontuation++;
-        b.board[y][x] = ' ';
+      if (b.users[x][y] == '$') {
+        b.users[active_user[i].y][x] = ' ';
+        player_lost(x, active_user[i].y);
+      } else {
+        if (b.board[y][x] == 'O') {
+          active_user[i].pontuation++;
+          b.board[y][x] = ' ';
+        }
+        b.users[y][x] = '*';
+        b.users[active_user[i].y][x] = ' ';
+        active_user[i].y = y;
       }
-      b.users[y][x] = '*';
-      b.users[active_user[i].y][x] = ' ';
-      active_user[i].y = y;
     }
     break;
   case LEFT:
     /* x-- */
     x--;
     if (x >= 0 && check_occupied(x, y) == false) {
-      if (b.board[y][x] == 'O') {
-        active_user[i].pontuation++;
-        b.board[y][x] = ' ';
+      if (b.users[x][y] == '$') {
+        b.users[y][active_user[i].x] = ' ';
+        player_lost(active_user[i].x, y);
+      } else {
+        if (b.board[y][x] == 'O') {
+          active_user[i].pontuation++;
+          b.board[y][x] = ' ';
+        }
+        b.users[y][x] = '*';
+        b.users[y][active_user[i].x] = ' ';
+        active_user[i].x = x;
       }
-      b.users[y][x] = '*';
-      b.users[y][active_user[i].x] = ' ';
-      active_user[i].x = x;
     }
     break;
   case RIGHT:
     /* x++ */
     x++;
     if (x < WIDTH && check_occupied(x, y) == false) {
-      if (b.board[y][x] == 'O') {
-        active_user[i].pontuation++;
-        b.board[y][x] = ' ';
+      if (b.users[x][y] == '$') {
+        b.users[y][active_user[i].x] = ' ';
+        player_lost(active_user[i].x, y);
+      } else {
+        if (b.board[y][x] == 'O') {
+          active_user[i].pontuation++;
+          b.board[y][x] = ' ';
+        }
+        b.users[y][x] = '*';
+        b.users[y][active_user[i].x] = ' ';
+        active_user[i].x = x;
       }
-      b.users[y][x] = '*';
-      b.users[y][active_user[i].x] = ' ';
-      active_user[i].x = x;
     }
     break;
   case BIGBOMB:
@@ -524,8 +658,8 @@ void *receiver(void *arg) {
                    receive.username);
             add_to_active_users_list(receive.pid, receive.username);
 
-            /* To set player position when he logs, choose first empty position
-             * found */
+            /* To set player position when he logs, choose first empty
+             * position found */
             coordinates c = get_first_empty_position_found();
             set_player_position(receive.pid, c.x, c.y);
             coordinates pos = get_player_position(receive.pid);
@@ -656,6 +790,8 @@ void keyboard(char *cmd) {
         map_loaded = true;
       }
     }
+  } else if (strcmp(arg[0], "game") == 0) {
+    show_game_info();
   } else {
     printf("Comando inválido!\n");
     printf("Insira <help> para ver a lista de comandos disponíveis\n");
