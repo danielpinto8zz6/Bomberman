@@ -37,7 +37,7 @@ void *thread_enemies(void *arg) {
   for (int i = 0; i < nr_enemies; i++) {
     enemie_move(enemy[i].y, enemy[i].x);
     update_all_users();
-    sleep(2);
+    sleep(1);
     if (i == nr_enemies - 1) {
       i = 0;
     }
@@ -63,13 +63,11 @@ bool move_enemie(int i, int y, int x) {
         player_lost(x, y - 1);
         b.users[y - 1][x] = '$';
         b.users[y][x] = ' ';
+      } else if (b.users[y - 1][x] != '$') {
+        b.users[y - 1][x] = '$';
+        b.users[y][x] = ' ';
       } else {
-        if (b.users[y - 1][x] != '$') {
-          b.users[y - 1][x] = '$';
-          b.users[y][x] = ' ';
-        } else {
-          return false;
-        }
+        return false;
       }
       return true;
     } else {
@@ -82,13 +80,11 @@ bool move_enemie(int i, int y, int x) {
         player_lost(x - 1, y);
         b.users[y][x - 1] = '$';
         b.users[y][x - 1] = ' ';
+      } else if (b.users[y - 1][x] != '$') {
+        b.users[y - 1][x] = '$';
+        b.users[y][x] = ' ';
       } else {
-        if (b.users[y - 1][x] != '$') {
-          b.users[y - 1][x] = '$';
-          b.users[y][x] = ' ';
-        } else {
-          return false;
-        }
+        return false;
       }
       return true;
     } else {
@@ -101,13 +97,11 @@ bool move_enemie(int i, int y, int x) {
         player_lost(x, y + 1);
         b.users[y + 1][x] = '$';
         b.users[y][x] = ' ';
+      } else if (b.users[y - 1][x] != '$') {
+        b.users[y - 1][x] = '$';
+        b.users[y][x] = ' ';
       } else {
-        if (b.users[y - 1][x] != '$') {
-          b.users[y - 1][x] = '$';
-          b.users[y][x] = ' ';
-        } else {
-          return false;
-        }
+        return false;
       }
       return true;
     } else {
@@ -120,13 +114,11 @@ bool move_enemie(int i, int y, int x) {
         player_lost(x + 1, y);
         b.users[y][x + 1] = '$';
         b.users[y][x + 1] = ' ';
+      } else if (b.users[y - 1][x] != '$') {
+        b.users[y - 1][x] = '$';
+        b.users[y][x] = ' ';
       } else {
-        if (b.users[y - 1][x] != '$') {
-          b.users[y - 1][x] = '$';
-          b.users[y][x] = ' ';
-        } else {
-          return false;
-        }
+        return false;
       }
       return true;
     } else {

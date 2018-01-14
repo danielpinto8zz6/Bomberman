@@ -1,7 +1,8 @@
 #include "../structs.h"
-#include "main.h"
 #include "bombs.h"
+#include "enemies.h"
 #include "game.h"
+#include "main.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -50,6 +51,14 @@ void player_lost(int x, int y) {
   }
 }
 
+void enemy_lost(int x, int y) {
+  int i;
+  for (i = 0; i < nr_enemies && enemy[i].x != x && enemy[i].y != y; i++)
+    ;
+  enemy[i] = enemy[nr_enemies - 1];
+  nr_enemies--;
+}
+
 int get_game_enemies() {
   int enermies = 0;
   const char *env = getenv("NENEMY");
@@ -77,8 +86,8 @@ void load_game() {
   start_bombs_positions();
   fill_board();
   place_objects();
-  // set_enemies();
-  // enemies();
+  set_enemies();
+  enemies();
 }
 
 bool load_board(char *filename) {

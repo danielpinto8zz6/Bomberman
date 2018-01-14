@@ -14,6 +14,7 @@ void load_game();
 int get_game_objects();
 int get_game_enemies();
 void player_lost(int x,int y);
+void enemy_lost(int x, int y);
 void show_game_info();
 coordinates get_first_empty_position_found();
 void start_players_positions();

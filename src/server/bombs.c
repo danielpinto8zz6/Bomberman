@@ -5,6 +5,8 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 int bomb_x, bomb_y, bomb_type;
@@ -38,6 +40,9 @@ void *thread_bomb(void *arg) {
           if (b.users[y][x] == '*') {
             b.users[y][x] = ' ';
             player_lost(x, y);
+          } else if (b.users[y][x] == '$') {
+            b.users[y][x] = ' ';
+            enemy_lost(x, y);
           }
         }
     update_all_users();
@@ -56,6 +61,9 @@ void *thread_bomb(void *arg) {
           if (b.users[y][x] == '*') {
             b.users[y][x] = ' ';
             player_lost(x, y);
+          } else if (b.users[y][x] == '$') {
+            b.users[y][x] = ' ';
+            enemy_lost(x, y);
           }
         }
     update_all_users();
