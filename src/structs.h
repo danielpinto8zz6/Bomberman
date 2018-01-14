@@ -18,6 +18,8 @@
 #define MAX_ACTIVE_USERS_EXCEEDED 13
 #define MINIBOMB 14
 #define BIGBOMB 15
+#define PLAYING 16
+#define LOST 17
 
 typedef struct {
   char username[20];
@@ -41,6 +43,7 @@ typedef struct {
   int pontuation;
   int minibombs;
   int bigbombs;
+  int playing;
 } usersActive;
 
 typedef struct {

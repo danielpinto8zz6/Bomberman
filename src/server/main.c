@@ -27,31 +27,59 @@ Board b;
 
 int bomb_x, bomb_y, bomb_type;
 
+void player_lost(int x, int y) {
+  for (int i = 0; i < nr_active_users; i++) {
+    if (active_user[i].x == x && active_user[i].y == y) {
+      active_user[i].playing = LOST;
+      send_update(active_user[i].pid);
+    }
+  }
+}
+
 void *thread_bomb(void *arg) {
   // Bomb *bomb = (Bomb *)arg;
-  int x = bomb_x;
-  int y = bomb_y;
+  int bx = bomb_x;
+  int by = bomb_y;
   int type = bomb_type;
-  int x_plus_one = x + 1;
-
-  printf("Type: %d, X->%d, Y->%d\n", type, x, y);
 
   sleep(2);
 
   if (type == MINIBOMB) {
-    b.bombs[x_plus_one][y] = 'X';
-    b.bombs[x - 1][y] = 'X';
-    b.bombs[x][y + 1] = 'X';
-    b.bombs[x][y - 1] = 'X';
+    for (int y = by - 2; y <= by + 2; y++)
+      for (int x = bx - 2; x <= bx + 2; x++)
+        if (b.board[y][x] != '#')
+          b.bombs[y][x] = 'X';
     update_all_users();
     sleep(2);
-    b.bombs[x][y] = ' ';
-    b.bombs[x + 1][y] = ' ';
-    b.bombs[x - 1][y] = ' ';
-    b.bombs[x][y + 1] = ' ';
-    b.bombs[x][y - 1] = ' ';
+    for (int y = by - 2; y <= by + 2; y++)
+      for (int x = bx - 2; x <= bx + 2; x++)
+        if (b.board[y][x] != '#') {
+          b.bombs[y][x] = ' ';
+          b.board[y][x] = ' ';
+          if (b.users[y][x] == '*') {
+            b.users[y][x] = ' ';
+            player_lost(x, y);
+          }
+        }
+    update_all_users();
   } else if (type == BIGBOMB) {
-    printf("Bigbomb");
+    for (int y = by - 4; y <= by + 4; y++)
+      for (int x = bx - 4; x <= bx + 4; x++)
+        if (b.board[y][x] != '#')
+          b.bombs[y][x] = 'X';
+    update_all_users();
+    sleep(2);
+    for (int y = by - 4; y <= by + 4; y++)
+      for (int x = bx - 4; x <= bx + 4; x++)
+        if (b.board[y][x] != '#') {
+          b.bombs[y][x] = ' ';
+          b.board[y][x] = ' ';
+          if (b.users[y][x] == '*') {
+            b.users[y][x] = ' ';
+            player_lost(x, y);
+          }
+        }
+    update_all_users();
   }
   pthread_exit(0);
 }
@@ -442,6 +470,7 @@ void send_update(int pid) {
   send.pontuation = active_user[i].pontuation;
   send.minibombs = active_user[i].minibombs;
   send.bigbombs = active_user[i].bigbombs;
+  send.playing = active_user[i].playing;
 
   sprintf(pipe, "pipe-%d", pid);
   fd = open(pipe, O_WRONLY, 0600);
@@ -503,6 +532,7 @@ void *receiver(void *arg) {
             active_user[get_user_position(receive.pid)].pontuation = 0;
             active_user[get_user_position(receive.pid)].minibombs = 3;
             active_user[get_user_position(receive.pid)].bigbombs = 2;
+            active_user[get_user_position(receive.pid)].playing = PLAYING;
             send.x = pos.x;
             send.y = pos.y;
             send.action = LOGGED;

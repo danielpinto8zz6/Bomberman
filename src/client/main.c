@@ -16,6 +16,8 @@ WINDOW *info;
 
 int logged = 0;
 
+bool playing = true;
+
 usersActive receive;
 
 void place_in_board(int y, int x, char type) {
@@ -74,9 +76,14 @@ void update_board(usersActive game) {
   mvwprintw(info, 3, 9, "\t");
   mvwprintw(info, 5, 14, "\t");
   mvwprintw(info, 7, 13, "\t");
+  mvwprintw(info, 9, 9, "\t\t");
   mvwprintw(info, 3, 9, "%d", game.pontuation);
   mvwprintw(info, 5, 14, "%d", game.bigbombs);
   mvwprintw(info, 7, 13, "%d", game.minibombs);
+  if (game.playing == PLAYING)
+    mvwprintw(info, 9, 9, "Em jogo");
+  else if (game.playing == LOST)
+    mvwprintw(info, 9, 9, "Perdeu");
   wrefresh(info);
   wrefresh(win);
 }
@@ -125,38 +132,41 @@ void create_board() {
   mvwprintw(info, 3, 1, "Pontos:");
   mvwprintw(info, 5, 1, "Mega Bombas:");
   mvwprintw(info, 7, 1, "Bombinnhas:");
+  mvwprintw(info, 9, 1, "Estado:");
   mvwprintw(info, 12, 1, "Para mover o jogador utilize as setas");
   mvwprintw(info, 14, 1, "Para colocar uma mega bomba utilize o B");
   mvwprintw(info, 16, 1, "Para colocar uma bombinha utilize o N");
 
   while ((ch = getch()) != 'q') {
-    switch (ch) {
-    case KEY_LEFT:
-      game.action = LEFT;
-      write(fd, &game, sizeof(game));
-      break;
-    case KEY_RIGHT:
-      game.action = RIGHT;
-      write(fd, &game, sizeof(game));
-      break;
-    case KEY_UP:
-      game.action = UP;
-      write(fd, &game, sizeof(game));
-      break;
-    case KEY_DOWN:
-      game.action = DOWN;
-      write(fd, &game, sizeof(game));
-      break;
-    case 'b':
-    case 'B':
-      game.action = BIGBOMB;
-      write(fd, &game, sizeof(game));
-      break;
-    case 'n':
-    case 'N':
-      game.action = MINIBOMB;
-      write(fd, &game, sizeof(game));
-      break;
+    if (playing == true) {
+      switch (ch) {
+      case KEY_LEFT:
+        game.action = LEFT;
+        write(fd, &game, sizeof(game));
+        break;
+      case KEY_RIGHT:
+        game.action = RIGHT;
+        write(fd, &game, sizeof(game));
+        break;
+      case KEY_UP:
+        game.action = UP;
+        write(fd, &game, sizeof(game));
+        break;
+      case KEY_DOWN:
+        game.action = DOWN;
+        write(fd, &game, sizeof(game));
+        break;
+      case 'b':
+      case 'B':
+        game.action = BIGBOMB;
+        write(fd, &game, sizeof(game));
+        break;
+      case 'n':
+      case 'N':
+        game.action = MINIBOMB;
+        write(fd, &game, sizeof(game));
+        break;
+      }
     }
     wrefresh(win);
   }
@@ -215,9 +225,9 @@ void *receiver(void *arg) {
       printw("O utilizador ja esta logado\n");
       refresh();
     case UPDATE: /* Update Board */
+      if (receive.playing == LOST)
+        playing = false;
       update_board(receive);
-    default:
-      break;
     }
   } while (stop == 0);
 
