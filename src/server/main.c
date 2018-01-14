@@ -162,7 +162,7 @@ void *thread_bomb(void *arg) {
     for (int y = by - 2; y <= by + 2; y++)
       for (int x = bx - 2; x <= bx + 2; x++)
         if (b.board[y][x] != '#')
-          b.bombs[y][x] = 'X';
+          b.bombs[y][x] = 'x';
     update_all_users();
     sleep(2);
     for (int y = by - 2; y <= by + 2; y++)
@@ -480,6 +480,25 @@ void player_move(int move, int pid) {
         if (b.board[y][x] == 'O') {
           active_user[i].pontuation++;
           b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'B') {
+          active_user[i].bigbombs++;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'b') {
+          active_user[i].minibombs++;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'E') {
+          active_user[i].pontuation = active_user[i].pontuation + 10;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'C') {
+          int colector = 0;
+          for (int by = 0; by < HEIGHT; by++)
+            for (int bx = 0; bx < WIDTH; bx++)
+              if (b.board[by][bx] == 'O' && colector < 5) {
+                b.board[by][bx] = ' ';
+                active_user[i].pontuation++;
+                colector++;
+              }
+          b.board[y][x] = ' ';
         }
         b.users[y][x] = '*';
         b.users[active_user[i].y][x] = ' ';
@@ -497,6 +516,25 @@ void player_move(int move, int pid) {
       } else {
         if (b.board[y][x] == 'O') {
           active_user[i].pontuation++;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'B') {
+          active_user[i].bigbombs++;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'b') {
+          active_user[i].minibombs++;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'E') {
+          active_user[i].pontuation = active_user[i].pontuation + 10;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'C') {
+          int colector = 0;
+          for (int by = 0; by < HEIGHT; by++)
+            for (int bx = 0; bx < WIDTH; bx++)
+              if (b.board[by][bx] == 'O' && colector < 5) {
+                b.board[by][bx] = ' ';
+                active_user[i].pontuation++;
+                colector++;
+              }
           b.board[y][x] = ' ';
         }
         b.users[y][x] = '*';
@@ -516,6 +554,25 @@ void player_move(int move, int pid) {
         if (b.board[y][x] == 'O') {
           active_user[i].pontuation++;
           b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'B') {
+          active_user[i].bigbombs++;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'b') {
+          active_user[i].minibombs++;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'E') {
+          active_user[i].pontuation = active_user[i].pontuation + 10;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'C') {
+          int colector = 0;
+          for (int by = 0; by < HEIGHT; by++)
+            for (int bx = 0; bx < WIDTH; bx++)
+              if (b.board[by][bx] == 'O' && colector < 5) {
+                b.board[by][bx] = ' ';
+                active_user[i].pontuation++;
+                colector++;
+              }
+          b.board[y][x] = ' ';
         }
         b.users[y][x] = '*';
         b.users[y][active_user[i].x] = ' ';
@@ -534,6 +591,25 @@ void player_move(int move, int pid) {
         if (b.board[y][x] == 'O') {
           active_user[i].pontuation++;
           b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'B') {
+          active_user[i].bigbombs++;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'b') {
+          active_user[i].minibombs++;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'E') {
+          active_user[i].pontuation = active_user[i].pontuation + 10;
+          b.board[y][x] = ' ';
+        } else if (b.board[y][x] == 'C') {
+          int colector = 0;
+          for (int by = 0; by < HEIGHT; by++)
+            for (int bx = 0; bx < WIDTH; bx++)
+              if (b.board[by][bx] == 'O' && colector < 5) {
+                b.board[by][bx] = ' ';
+                active_user[i].pontuation++;
+                colector++;
+              }
+          b.board[y][x] = ' ';
         }
         b.users[y][x] = '*';
         b.users[y][active_user[i].x] = ' ';
@@ -544,9 +620,9 @@ void player_move(int move, int pid) {
   case BIGBOMB:
     if (active_user[i].bigbombs > 0) {
       /*You can't place a bomb on top of another */
-      if (b.bombs[y][x] != 'B' && b.bombs[y][x] != 'b') {
+      if (b.bombs[y][x] != 'X' && b.bombs[y][x] != 'x') {
         active_user[i].bigbombs--;
-        b.bombs[y][x] = 'B';
+        b.bombs[y][x] = 'X';
         bomb.x = x;
         bomb.y = y;
         bomb.type = BIGBOMB;
@@ -556,9 +632,9 @@ void player_move(int move, int pid) {
     break;
   case MINIBOMB:
     if (active_user[i].minibombs > 0) {
-      if (b.bombs[y][x] != 'B' && b.bombs[y][x] != 'b') {
+      if (b.bombs[y][x] != 'X' && b.bombs[y][x] != 'x') {
         active_user[i].minibombs--;
-        b.bombs[y][x] = 'b';
+        b.bombs[y][x] = 'x';
         bomb.x = x;
         bomb.y = y;
         bomb.type = MINIBOMB;
@@ -601,6 +677,8 @@ void send_update(int pid) {
 
   send.action = UPDATE;
   send.board = b;
+  send.x = active_user[i].x;
+  send.y = active_user[i].y;
   send.pontuation = active_user[i].pontuation;
   send.minibombs = active_user[i].minibombs;
   send.bigbombs = active_user[i].bigbombs;

@@ -28,6 +28,7 @@ void place_in_board(int y, int x, char type) {
     wattron(win, COLOR_PAIR(2));
     break;
   case 'X':
+  case 'x':
     wattron(win, COLOR_PAIR(3));
     break;
   case '#':
@@ -64,8 +65,7 @@ void update_board(usersActive game) {
   }
   for (int y = 0; y < HEIGHT; y++) {
     for (int x = 0; x < WIDTH; x++) {
-      if (game.board.bombs[y][x] == 'B' || game.board.bombs[y][x] == 'b' ||
-          game.board.bombs[y][x] == 'X')
+      if (game.board.bombs[y][x] == 'x' || game.board.bombs[y][x] == 'X')
         place_in_board(y, x, game.board.bombs[y][x]);
     }
   }
@@ -74,6 +74,12 @@ void update_board(usersActive game) {
       if (game.board.users[y][x] == '*' || game.board.users[y][x] == '$')
         place_in_board(y, x, game.board.users[y][x]);
     }
+  }
+
+  if (game.playing == PLAYING) {
+    wattron(win, COLOR_PAIR(8));
+    mvwprintw(win, game.y + 1, game.x + 1, "%c", '*');
+    wattron(win, COLOR_PAIR(1));
   }
 
   mvwprintw(info, 3, 9, "\t");
@@ -137,8 +143,8 @@ void create_board() {
   mvwprintw(info, 7, 1, "Bombinnhas:");
   mvwprintw(info, 9, 1, "Estado:");
   mvwprintw(info, 12, 1, "Para mover o jogador utilize as setas");
-  mvwprintw(info, 14, 1, "Para colocar uma mega bomba utilize o B");
-  mvwprintw(info, 16, 1, "Para colocar uma bombinha utilize o N");
+  mvwprintw(info, 14, 1, "Para colocar uma mega bomba utilize o M");
+  mvwprintw(info, 16, 1, "Para colocar uma bombinha utilize o B");
 
   while ((ch = getch()) != 'q') {
     if (playing == true) {
@@ -159,13 +165,13 @@ void create_board() {
         game.action = DOWN;
         write(fd, &game, sizeof(game));
         break;
-      case 'b':
-      case 'B':
+      case 'm':
+      case 'M':
         game.action = BIGBOMB;
         write(fd, &game, sizeof(game));
         break;
-      case 'n':
-      case 'N':
+      case 'b':
+      case 'B':
         game.action = MINIBOMB;
         write(fd, &game, sizeof(game));
         break;
@@ -316,6 +322,7 @@ int main(int argc, char *argv[]) {
   init_pair(5, COLOR_WHITE, COLOR_YELLOW);
   init_pair(6, COLOR_WHITE, COLOR_MAGENTA);
   init_pair(7, COLOR_WHITE, COLOR_CYAN);
+  init_pair(8, COLOR_BLUE, COLOR_WHITE);
 
   if (access(PIPE, F_OK) != 0) {
     error("O servidor nao se encontra em execucao. A sair...\n");
