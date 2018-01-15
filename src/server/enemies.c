@@ -40,14 +40,24 @@ void set_enemies() {
   }
 }
 
+bool check_if_enemy_exists(int y, int x) {
+  for (int i = 0; i < nr_active_users; i++) {
+    if (enemy[i].y == y && enemy[i].x == x)
+      return true;
+  }
+  return false;
+}
+
 void *thread_enemies(void *arg) {
   int i = 0;
   while (i < nr_enemies) {
-    enemy_move(enemy[i].y, enemy[i].x);
-    pthread_mutex_lock(&lock);
-    update_all_users();
-    pthread_mutex_unlock(&lock);
-    sleep(2);
+    if (check_if_enemy_exists(enemy[i].y, enemy[i].x) == true) {
+      enemy_move(enemy[i].y, enemy[i].x);
+      pthread_mutex_lock(&lock);
+      update_all_users();
+      pthread_mutex_unlock(&lock);
+      sleep(2);
+    }
     if (i == nr_enemies - 1) {
       i = 0;
     } else {

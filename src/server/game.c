@@ -10,6 +10,8 @@ void end_game() {
   for (int i = 0; i < nr_active_users; i++) {
     kick_from_pid(active_user[i].pid);
   }
+  printf("O jogo terminou!Todos os objetos foram apanhados\n");
+  printf("A reestabelecer tabuleiro...\n");
   game++;
   load_game();
 }
@@ -17,8 +19,6 @@ void end_game() {
 void check_game_state() {
   if (game_exit == 0) {
     if (get_nr_objects() == 0) {
-      printf("O jogo terminou!Todos os objetos foram apanhados\n");
-      printf("A reestabelecer tabuleiro...\n");
       game_exit = 1;
       coordinates c = get_first_empty_position_found();
       b.board[c.y][c.x] = 'S';
