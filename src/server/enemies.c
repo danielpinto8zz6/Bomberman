@@ -41,14 +41,18 @@ void set_enemies() {
 }
 
 void *thread_enemies(void *arg) {
-  coordinates *en = (coordinates *)arg;
-  while (1) {
-    enemy_move(en->y, enemy->x);
+  int i = 0;
+  while (i < nr_enemies) {
+    enemy_move(enemy[i].y, enemy[i].x);
     pthread_mutex_lock(&lock);
     update_all_users();
-    printf("Move : %d %d\n", enemy->x, enemy->y);
     pthread_mutex_unlock(&lock);
-    sleep(5);
+    sleep(2);
+    if (i == nr_enemies - 1) {
+      i = 0;
+    } else {
+      i++;
+    }
   }
 
   return NULL;
@@ -56,93 +60,72 @@ void *thread_enemies(void *arg) {
 
 void enemies() {
   int err;
-  for (int i = 0; i < nr_enemies; i++) {
-    err = pthread_create(&enemy_thread[i], NULL, &thread_enemies,
-                         (void *)&enemy[i]);
-    if (err != 0)
-      printf("Nao foi possivel criar a thread");
-  }
+  pthread_t enemy_thread;
+
+  err = pthread_create(&enemy_thread, NULL, &thread_enemies, NULL);
+  if (err != 0)
+    printf("Nao foi possivel criar a thread");
 }
 
 bool move_enemy(int i, int y, int x) {
+
   int j = get_enemy_position(y, x);
+  int start_x = x, start_y = y;
+
   switch (i) {
   case 0:
-    if (b.board[y - 1][x] == ' ' || b.board[y - 1][x] == 'O') {
-      if (b.users[y - 1][x] == '*') {
-        player_lost(x, y - 1);
-        b.enemies[y - 1][x] = '$';
-        b.enemies[y][x] = ' ';
-        enemy[j].y--;
-      } else if (b.enemies[y - 1][x] != '$') {
-        b.enemies[y - 1][x] = '$';
-        b.enemies[y][x] = ' ';
-        enemy[j].y--;
-      } else {
-        return false;
-      }
-      return true;
-    } else {
-      return false;
-    }
+    x--;
     break;
   case 1:
-    if (b.board[y][x - 1] == ' ' || b.board[y][x - 1] == 'O') {
-      if (b.users[y][x - 1] == '*') {
-        player_lost(x - 1, y);
-        b.enemies[y][x - 1] = '$';
-        b.enemies[y][x] = ' ';
-        enemy[j].x--;
-      } else if (b.enemies[y - 1][x] != '$') {
-        b.enemies[y - 1][x] = '$';
-        b.enemies[y][x] = ' ';
-        enemy[j].x--;
-      } else {
-        return false;
-      }
-      return true;
-    } else {
-      return false;
-    }
+    x++;
     break;
   case 2:
-    if (b.board[y + 1][x] == ' ' || b.board[y + 1][x] == 'O') {
-      if (b.users[y + 1][x] == '*') {
-        player_lost(x, y + 1);
-        b.enemies[y + 1][x] = '$';
-        b.enemies[y][x] = ' ';
-        enemy[j].y++;
-      } else if (b.enemies[y - 1][x] != '$') {
-        b.enemies[y - 1][x] = '$';
-        b.enemies[y][x] = ' ';
-        enemy[j].y++;
-      } else {
-        return false;
-      }
-      return true;
-    } else {
-      return false;
-    }
+    y--;
     break;
   case 3:
-    if (b.board[y][x + 1] == ' ' || b.board[y][x + 1] == 'O') {
-      if (b.users[y][x + 1] == '*') {
-        player_lost(x + 1, y);
-        b.enemies[y][x + 1] = '$';
-        b.enemies[y][x] = ' ';
+    y++;
+    break;
+  }
+
+  if (b.board[y][x] == ' ' || b.board[y][x] == 'O') {
+    if (b.users[y][x] == '*') {
+      player_lost(x, y);
+      b.enemies[y][x] = '$';
+      b.enemies[start_y][start_x] = ' ';
+      switch (i) {
+      case 0:
+        enemy[j].x--;
+        break;
+      case 1:
         enemy[j].x++;
-      } else if (b.enemies[y - 1][x] != '$') {
-        b.enemies[y - 1][x] = '$';
-        b.enemies[y][x] = ' ';
-        enemy[j].x++;
-      } else {
-        return false;
+        break;
+      case 2:
+        enemy[j].y--;
+        break;
+      case 3:
+        enemy[j].y++;
+        break;
       }
       return true;
-    } else {
-      return false;
+    } else if (b.enemies[y - 1][x] != '$') {
+      b.enemies[y][x] = '$';
+      b.enemies[start_y][start_x] = ' ';
+      switch (i) {
+      case 0:
+        enemy[j].x--;
+        break;
+      case 1:
+        enemy[j].x++;
+        break;
+      case 2:
+        enemy[j].y--;
+        break;
+      case 3:
+        enemy[j].y++;
+        break;
+      }
+      return true;
     }
-    break;
   }
   return false;
 }

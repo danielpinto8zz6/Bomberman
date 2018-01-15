@@ -32,7 +32,7 @@ Board b;
 pthread_mutex_t lock;
 pthread_t thread;
 pthread_t thread_bombs;
-pthread_t enemy_thread[20];
+pthread_t enemy_thread;
 
 bool check_if_users_exceeds_max_active() {
   const char *env = getenv("NMAXPLAY");

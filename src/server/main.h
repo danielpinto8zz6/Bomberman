@@ -15,7 +15,7 @@ bool check_if_users_exceeds_max_active();
 extern pthread_t thread;
 extern pthread_t thread_bombs;
 extern pthread_mutex_t lock;
-extern pthread_t enemy_thread[20];
+extern pthread_t enemy_thread;
 extern Board b;
 extern bool map_loaded;
 extern int game;
