@@ -30,6 +30,7 @@ typedef struct {
   char board[HEIGHT][WIDTH];
   char users[HEIGHT][WIDTH];
   char bombs[HEIGHT][WIDTH];
+  char enemies[HEIGHT][WIDTH];
 } Board;
 
 typedef struct {

@@ -11,6 +11,13 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+int get_enemy_position(int y, int x) {
+  for (int i = 0; i < nr_enemies; i++)
+    if (enemy[i].x == x && enemy[i].y == y)
+      return i;
+  return -1;
+}
+
 void set_enemies() {
   int enemies = get_game_enemies();
   if (enemies > 20)
@@ -26,7 +33,7 @@ void set_enemies() {
     int random = random_number(i);
     int x = empty_positions[random].x;
     int y = empty_positions[random].y;
-    b.users[y][x] = '$';
+    b.enemies[y][x] = '$';
     enemy[j].x = x;
     enemy[j].y = y;
     nr_enemies++;
@@ -34,13 +41,14 @@ void set_enemies() {
 }
 
 void *thread_enemies(void *arg) {
-  for (int i = 0; i < nr_enemies; i++) {
-    enemie_move(enemy[i].y, enemy[i].x);
+  coordinates *en = (coordinates *)arg;
+  while (1) {
+    enemy_move(en->y, enemy->x);
+    pthread_mutex_lock(&lock);
     update_all_users();
-    sleep(1);
-    if (i == nr_enemies - 1) {
-      i = 0;
-    }
+    printf("Move : %d %d\n", enemy->x, enemy->y);
+    pthread_mutex_unlock(&lock);
+    sleep(5);
   }
 
   return NULL;
@@ -48,24 +56,28 @@ void *thread_enemies(void *arg) {
 
 void enemies() {
   int err;
-  pthread_t enemy_thread;
-
-  err = pthread_create(&enemy_thread, NULL, &thread_enemies, NULL);
-  if (err != 0)
-    printf("Nao foi possivel criar a thread");
+  for (int i = 0; i < nr_enemies; i++) {
+    err = pthread_create(&enemy_thread[i], NULL, &thread_enemies,
+                         (void *)&enemy[i]);
+    if (err != 0)
+      printf("Nao foi possivel criar a thread");
+  }
 }
 
-bool move_enemie(int i, int y, int x) {
+bool move_enemy(int i, int y, int x) {
+  int j = get_enemy_position(y, x);
   switch (i) {
   case 0:
-    if (b.board[y - 1][x] == ' ') {
+    if (b.board[y - 1][x] == ' ' || b.board[y - 1][x] == 'O') {
       if (b.users[y - 1][x] == '*') {
         player_lost(x, y - 1);
-        b.users[y - 1][x] = '$';
-        b.users[y][x] = ' ';
-      } else if (b.users[y - 1][x] != '$') {
-        b.users[y - 1][x] = '$';
-        b.users[y][x] = ' ';
+        b.enemies[y - 1][x] = '$';
+        b.enemies[y][x] = ' ';
+        enemy[j].y--;
+      } else if (b.enemies[y - 1][x] != '$') {
+        b.enemies[y - 1][x] = '$';
+        b.enemies[y][x] = ' ';
+        enemy[j].y--;
       } else {
         return false;
       }
@@ -75,14 +87,16 @@ bool move_enemie(int i, int y, int x) {
     }
     break;
   case 1:
-    if (b.board[y][x - 1] == ' ') {
+    if (b.board[y][x - 1] == ' ' || b.board[y][x - 1] == 'O') {
       if (b.users[y][x - 1] == '*') {
         player_lost(x - 1, y);
-        b.users[y][x - 1] = '$';
-        b.users[y][x - 1] = ' ';
-      } else if (b.users[y - 1][x] != '$') {
-        b.users[y - 1][x] = '$';
-        b.users[y][x] = ' ';
+        b.enemies[y][x - 1] = '$';
+        b.enemies[y][x] = ' ';
+        enemy[j].x--;
+      } else if (b.enemies[y - 1][x] != '$') {
+        b.enemies[y - 1][x] = '$';
+        b.enemies[y][x] = ' ';
+        enemy[j].x--;
       } else {
         return false;
       }
@@ -92,14 +106,16 @@ bool move_enemie(int i, int y, int x) {
     }
     break;
   case 2:
-    if (b.board[y + 1][x] == ' ') {
+    if (b.board[y + 1][x] == ' ' || b.board[y + 1][x] == 'O') {
       if (b.users[y + 1][x] == '*') {
         player_lost(x, y + 1);
-        b.users[y + 1][x] = '$';
-        b.users[y][x] = ' ';
-      } else if (b.users[y - 1][x] != '$') {
-        b.users[y - 1][x] = '$';
-        b.users[y][x] = ' ';
+        b.enemies[y + 1][x] = '$';
+        b.enemies[y][x] = ' ';
+        enemy[j].y++;
+      } else if (b.enemies[y - 1][x] != '$') {
+        b.enemies[y - 1][x] = '$';
+        b.enemies[y][x] = ' ';
+        enemy[j].y++;
       } else {
         return false;
       }
@@ -109,14 +125,16 @@ bool move_enemie(int i, int y, int x) {
     }
     break;
   case 3:
-    if (b.board[y][x + 1] == ' ') {
+    if (b.board[y][x + 1] == ' ' || b.board[y][x + 1] == 'O') {
       if (b.users[y][x + 1] == '*') {
         player_lost(x + 1, y);
-        b.users[y][x + 1] = '$';
-        b.users[y][x + 1] = ' ';
-      } else if (b.users[y - 1][x] != '$') {
-        b.users[y - 1][x] = '$';
-        b.users[y][x] = ' ';
+        b.enemies[y][x + 1] = '$';
+        b.enemies[y][x] = ' ';
+        enemy[j].x++;
+      } else if (b.enemies[y - 1][x] != '$') {
+        b.enemies[y - 1][x] = '$';
+        b.enemies[y][x] = ' ';
+        enemy[j].x++;
       } else {
         return false;
       }
@@ -129,32 +147,14 @@ bool move_enemie(int i, int y, int x) {
   return false;
 }
 
-void enemie_move(int y, int x) {
+void enemy_move(int y, int x) {
   int i = random_number(3);
-  bool b;
 
-  /*Caso a posição esteja ocupada procurar a primeira livre */
-  if (move_enemie(i, y, x) == false) {
-    b = move_enemie(0, y, x);
-    if (b == false) {
-      b = move_enemie(1, y, x);
-      if (b == false) {
-        b = move_enemie(2, y, x);
-        if (b == false) {
-          b = move_enemie(3, y, x);
-          if (b == false) {
+  // /*Caso a posição esteja ocupada procurar a primeira livre */
+  if (move_enemy(i, y, x) == false)
+    if (move_enemy(0, y, x) == false)
+      if (move_enemy(1, y, x) == false)
+        if (move_enemy(2, y, x) == false)
+          if (move_enemy(3, y, x) == false)
             return;
-          }
-        } else {
-          update_all_users();
-        }
-      } else {
-        update_all_users();
-      }
-    } else {
-      update_all_users();
-    }
-  } else {
-    update_all_users();
-  }
 }

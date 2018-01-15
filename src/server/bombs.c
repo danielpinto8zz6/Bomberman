@@ -30,7 +30,9 @@ void *thread_bomb(void *arg) {
       for (int x = bx - 2; x <= bx + 2; x++)
         if (b.board[y][x] != '#')
           b.bombs[y][x] = 'x';
+    pthread_mutex_lock(&lock);
     update_all_users();
+    pthread_mutex_unlock(&lock);
     sleep(2);
     for (int y = by - 2; y <= by + 2; y++)
       for (int x = bx - 2; x <= bx + 2; x++)
@@ -38,20 +40,23 @@ void *thread_bomb(void *arg) {
           b.bombs[y][x] = ' ';
           b.board[y][x] = ' ';
           if (b.users[y][x] == '*') {
-            b.users[y][x] = ' ';
             player_lost(x, y);
-          } else if (b.users[y][x] == '$') {
-            b.users[y][x] = ' ';
+          } else if (b.enemies[y][x] == '$') {
+            b.enemies[y][x] = ' ';
             enemy_lost(x, y);
           }
         }
+    pthread_mutex_lock(&lock);
     update_all_users();
+    pthread_mutex_unlock(&lock);
   } else if (type == BIGBOMB) {
     for (int y = by - 4; y <= by + 4; y++)
       for (int x = bx - 4; x <= bx + 4; x++)
         if (b.board[y][x] != '#')
           b.bombs[y][x] = 'X';
+    pthread_mutex_lock(&lock);
     update_all_users();
+    pthread_mutex_unlock(&lock);
     sleep(2);
     for (int y = by - 4; y <= by + 4; y++)
       for (int x = bx - 4; x <= bx + 4; x++)
@@ -59,21 +64,20 @@ void *thread_bomb(void *arg) {
           b.bombs[y][x] = ' ';
           b.board[y][x] = ' ';
           if (b.users[y][x] == '*') {
-            b.users[y][x] = ' ';
             player_lost(x, y);
-          } else if (b.users[y][x] == '$') {
-            b.users[y][x] = ' ';
+          } else if (b.enemies[y][x] == '$') {
+            b.enemies[y][x] = ' ';
             enemy_lost(x, y);
           }
         }
+    pthread_mutex_lock(&lock);
     update_all_users();
+    pthread_mutex_unlock(&lock);
   }
   pthread_exit(0);
 }
 
 void place_bomb(Bomb *bomb) {
-  pthread_t thread_bombs;
-
   /* Vou usar variáveis globais visto que ao passar a estrutura com parametro
    * está a perder dados */
   bomb_x = bomb->x;

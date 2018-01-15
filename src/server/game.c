@@ -6,6 +6,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void check_game_state() {
+  if (game_exit == 0) {
+    if (get_nr_objects() == 0) {
+      printf("Todos os objetos foram apanhados\n");
+      game_exit = 1;
+      coordinates c = get_first_empty_position_found();
+      b.board[c.y][c.x] = 'S';
+    }
+  }
+}
+
 void start_players_positions() {
   for (int y = 0; y < HEIGHT; y++)
     for (int x = 0; x < WIDTH; x++)
@@ -24,6 +35,15 @@ coordinates get_first_empty_position_found() {
   return pos;
 }
 
+int get_nr_objects() {
+  int objects = 0;
+  for (int y = 0; y < HEIGHT; y++)
+    for (int x = 0; x < WIDTH; x++)
+      if (b.board[y][x] == 'O')
+        objects++;
+  return objects;
+}
+
 void show_game_info() {
   for (int i = 0; i < nr_active_users; i++) {
     if (active_user[i].playing == PLAYING) {
@@ -34,18 +54,19 @@ void show_game_info() {
       printf("\tPontuacao : %d\n", active_user[i].pontuation);
     }
   }
-  int objects = 0;
-  for (int y = 0; y < HEIGHT; y++)
-    for (int x = 0; x < WIDTH; x++)
-      if (b.board[y][x] == 'O')
-        objects++;
+  int objects = get_nr_objects();
   printf("\nObjetos por apanhar : %d\n", objects);
+  printf("\nInimigos: %d\n", nr_enemies);
+  for (int i = 0; i < nr_enemies; i++) {
+    printf("%d - [%d, %d]\n", i, enemy[i].x, enemy[i].y);
+  }
 }
 
 void player_lost(int x, int y) {
   for (int i = 0; i < nr_active_users; i++) {
     if (active_user[i].x == x && active_user[i].y == y) {
       active_user[i].playing = LOST;
+      b.users[y][x] = ' ';
       send_update(active_user[i].pid);
     }
   }
@@ -87,7 +108,7 @@ void load_game() {
   fill_board();
   place_objects();
   set_enemies();
-  enemies();
+  // enemies();
 }
 
 bool load_board(char *filename) {
@@ -283,8 +304,7 @@ void player_move(int move, int pid) {
     /* y-- */
     y--;
     if (y >= 0 && check_occupied(x, y) == false) {
-      if (b.users[x][y] == '$') {
-        b.users[active_user[i].y][x] = ' ';
+      if (b.enemies[y][x] == '$') {
         player_lost(x, active_user[i].y);
       } else {
         if (b.board[y][x] == 'O') {
@@ -320,8 +340,7 @@ void player_move(int move, int pid) {
     /* y++ */
     y++;
     if (y < HEIGHT && check_occupied(x, y) == false) {
-      if (b.users[x][y] == '$') {
-        b.users[active_user[i].y][x] = ' ';
+      if (b.enemies[y][x] == '$') {
         player_lost(x, active_user[i].y);
       } else {
         if (b.board[y][x] == 'O') {
@@ -357,8 +376,7 @@ void player_move(int move, int pid) {
     /* x-- */
     x--;
     if (x >= 0 && check_occupied(x, y) == false) {
-      if (b.users[x][y] == '$') {
-        b.users[y][active_user[i].x] = ' ';
+      if (b.enemies[y][x] == '$') {
         player_lost(active_user[i].x, y);
       } else {
         if (b.board[y][x] == 'O') {
@@ -394,8 +412,7 @@ void player_move(int move, int pid) {
     /* x++ */
     x++;
     if (x < WIDTH && check_occupied(x, y) == false) {
-      if (b.users[x][y] == '$') {
-        b.users[y][active_user[i].x] = ' ';
+      if (b.enemies[y][x] == '$') {
         player_lost(active_user[i].x, y);
       } else {
         if (b.board[y][x] == 'O') {

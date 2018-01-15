@@ -1,12 +1,12 @@
 #include "../structs.h"
 #include "game.h"
 #include "main.h"
+#include <fcntl.h>
 #include <ncurses.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <pthread.h>
-#include <fcntl.h>
 
 void place_in_board(int y, int x, char type) {
   x++;
@@ -30,6 +30,9 @@ void place_in_board(int y, int x, char type) {
     break;
   case '$':
     wattron(win, COLOR_PAIR(7));
+    break;
+  case 'S':
+    wattron(win, COLOR_PAIR(3));
     break;
   }
   mvwprintw(win, y, x, "%c", type);
@@ -59,8 +62,14 @@ void update_board(usersActive game) {
   }
   for (int y = 0; y < HEIGHT; y++) {
     for (int x = 0; x < WIDTH; x++) {
-      if (game.board.users[y][x] == '*' || game.board.users[y][x] == '$')
+      if (game.board.users[y][x] == '*')
         place_in_board(y, x, game.board.users[y][x]);
+    }
+  }
+  for (int y = 0; y < HEIGHT; y++) {
+    for (int x = 0; x < WIDTH; x++) {
+      if (game.board.enemies[y][x] == '$')
+        place_in_board(y, x, game.board.enemies[y][x]);
     }
   }
 

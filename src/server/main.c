@@ -23,11 +23,16 @@ usersActive active_user[20];
 coordinates enemy[20];
 int nr_enemies = 0;
 
-int game = 0;
+int game = 0, game_exit = 0;
 
 bool map_loaded = false;
 
 Board b;
+
+pthread_mutex_t lock;
+pthread_t thread;
+pthread_t thread_bombs;
+pthread_t enemy_thread[20];
 
 bool check_if_users_exceeds_max_active() {
   const char *env = getenv("NMAXPLAY");
@@ -138,10 +143,11 @@ void *receiver(void *arg) {
             coordinates c = get_first_empty_position_found();
             set_player_position(receive.pid, c.x, c.y);
             coordinates pos = get_player_position(receive.pid);
-            active_user[get_user_position(receive.pid)].pontuation = 0;
-            active_user[get_user_position(receive.pid)].minibombs = 3;
-            active_user[get_user_position(receive.pid)].bigbombs = 2;
-            active_user[get_user_position(receive.pid)].playing = PLAYING;
+            int i = get_user_position(receive.pid);
+            active_user[i].pontuation = 0;
+            active_user[i].minibombs = 3;
+            active_user[i].bigbombs = 2;
+            active_user[i].playing = PLAYING;
             send.x = pos.x;
             send.y = pos.y;
             send.action = LOGGED;
@@ -168,18 +174,22 @@ void *receiver(void *arg) {
       }
     case UP:
       player_move(UP, receive.pid);
+      check_game_state();
       update_all_users();
       break;
     case DOWN:
       player_move(DOWN, receive.pid);
+      check_game_state();
       update_all_users();
       break;
     case LEFT:
       player_move(LEFT, receive.pid);
+      check_game_state();
       update_all_users();
       break;
     case RIGHT:
       player_move(RIGHT, receive.pid);
+      check_game_state();
       update_all_users();
       break;
     case BIGBOMB:
@@ -277,7 +287,6 @@ void keyboard(char *cmd) {
 void error(char *msg) { printf("%s", msg); }
 
 int main(int argc, char *argv[]) {
-  pthread_t thread;
   char cmd[80];
   int fd_pipe, res;
   usersActive active;
