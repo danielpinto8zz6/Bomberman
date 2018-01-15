@@ -72,10 +72,17 @@ void *receiver(void *arg) {
     case ALREADY_LOGGED: /* user already logged */
       printw("O utilizador ja esta logado\n");
       refresh();
+      break;
     case UPDATE: /* Update Board */
       if (receive.playing == LOST)
         playing = false;
       update_board(receive);
+      break;
+    case GAME_FINISH:
+      clear();
+      printw("O jogo terminou, para voltar a jogar efetue login...\n");
+      forced_shutdown();
+      break;
     }
   } while (stop == 0);
 

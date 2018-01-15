@@ -26,6 +26,10 @@ void place_in_board(int y, int x, char type) {
     wattron(win, COLOR_PAIR(5));
     break;
   case 'O':
+  case 'b':
+  case 'C':
+  case 'B':
+  case 'E':
     wattron(win, COLOR_PAIR(6));
     break;
   case '$':

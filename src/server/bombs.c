@@ -11,6 +11,19 @@
 
 int bomb_x, bomb_y, bomb_type;
 
+char random_extra() {
+  int i = random_number(20);
+
+  if (i > 0 && i < 12)
+    return 'E';
+  else if (i >= 12 && i < 17)
+    return 'b';
+  else if (i >= 17 && i < 19)
+    return 'B';
+  else
+    return 'C';
+}
+
 void start_bombs_positions() {
   for (int y = 0; y < HEIGHT; y++)
     for (int x = 0; x < WIDTH; x++)
@@ -43,6 +56,7 @@ void *thread_bomb(void *arg) {
             player_lost(x, y);
           } else if (b.enemies[y][x] == '$') {
             b.enemies[y][x] = ' ';
+            b.board[y][x] = random_extra();
             enemy_lost(x, y);
           }
         }
@@ -67,6 +81,7 @@ void *thread_bomb(void *arg) {
             player_lost(x, y);
           } else if (b.enemies[y][x] == '$') {
             b.enemies[y][x] = ' ';
+            b.board[y][x] = random_extra();
             enemy_lost(x, y);
           }
         }

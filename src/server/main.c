@@ -59,6 +59,29 @@ int random_number(int limit) {
   return retval;
 }
 
+void kick_from_pid(int pid) {
+  char pipe[10];
+  int fd, found = 0;
+  usersActive send;
+
+  send.action = GAME_FINISH;
+
+  for (int i = 0; i < nr_active_users; i++) {
+    if (active_user[i].pid == pid) {
+      sprintf(pipe, "pipe-%d", active_user[i].pid);
+      delete_from_active_users_list(active_user[i].pid);
+      found = 1;
+    }
+  }
+  if (found == 1) {
+    fd = open(pipe, O_WRONLY, 0600);
+    write(fd, &send, sizeof(send));
+    close(fd);
+  } else {
+    printf("Utilizador não encontrado");
+  }
+}
+
 void kick_user(char username[20]) {
   char pipe[10];
   int fd, found = 0;

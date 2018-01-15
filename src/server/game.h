@@ -1,5 +1,6 @@
 #include <stdbool.h>
 
+void end_game();
 void check_game_state();
 void player_move(int move,int pid);
 bool check_occupied(int pos_x,int pos_y);

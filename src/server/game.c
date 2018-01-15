@@ -6,10 +6,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void end_game() {
+  for (int i = 0; i < nr_active_users; i++) {
+    kick_from_pid(active_user[i].pid);
+  }
+  game++;
+  load_game();
+}
+
 void check_game_state() {
   if (game_exit == 0) {
     if (get_nr_objects() == 0) {
-      printf("Todos os objetos foram apanhados\n");
+      printf("O jogo terminou!Todos os objetos foram apanhados\n");
+      printf("A reestabelecer tabuleiro...\n");
       game_exit = 1;
       coordinates c = get_first_empty_position_found();
       b.board[c.y][c.x] = 'S';
@@ -108,7 +117,7 @@ void load_game() {
   fill_board();
   place_objects();
   set_enemies();
-  // enemies();
+  enemies();
 }
 
 bool load_board(char *filename) {
@@ -307,7 +316,9 @@ void player_move(int move, int pid) {
       if (b.enemies[y][x] == '$') {
         player_lost(x, active_user[i].y);
       } else {
-        if (b.board[y][x] == 'O') {
+        if (b.board[y][x] == 'S') {
+          end_game();
+        } else if (b.board[y][x] == 'O') {
           active_user[i].pontuation++;
           b.board[y][x] = ' ';
         } else if (b.board[y][x] == 'B') {
@@ -343,7 +354,9 @@ void player_move(int move, int pid) {
       if (b.enemies[y][x] == '$') {
         player_lost(x, active_user[i].y);
       } else {
-        if (b.board[y][x] == 'O') {
+        if (b.board[y][x] == 'S') {
+          end_game();
+        } else if (b.board[y][x] == 'O') {
           active_user[i].pontuation++;
           b.board[y][x] = ' ';
         } else if (b.board[y][x] == 'B') {
@@ -379,7 +392,9 @@ void player_move(int move, int pid) {
       if (b.enemies[y][x] == '$') {
         player_lost(active_user[i].x, y);
       } else {
-        if (b.board[y][x] == 'O') {
+        if (b.board[y][x] == 'S') {
+          end_game();
+        } else if (b.board[y][x] == 'O') {
           active_user[i].pontuation++;
           b.board[y][x] = ' ';
         } else if (b.board[y][x] == 'B') {
@@ -415,7 +430,9 @@ void player_move(int move, int pid) {
       if (b.enemies[y][x] == '$') {
         player_lost(active_user[i].x, y);
       } else {
-        if (b.board[y][x] == 'O') {
+        if (b.board[y][x] == 'S') {
+          end_game();
+        } else if (b.board[y][x] == 'O') {
           active_user[i].pontuation++;
           b.board[y][x] = ' ';
         } else if (b.board[y][x] == 'B') {

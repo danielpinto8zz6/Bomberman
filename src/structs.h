@@ -20,6 +20,7 @@
 #define BIGBOMB 15
 #define PLAYING 16
 #define LOST 17
+#define GAME_FINISH 18
 
 typedef struct {
   char username[20];

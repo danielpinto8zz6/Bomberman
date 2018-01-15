@@ -8,6 +8,7 @@ void shutdown();
 void *receiver(void *arg);
 void send_update(int pid);
 void update_all_users();
+void kick_from_pid(int pid);
 void kick_user(char username[20]);
 int random_number(int limit);
 bool check_if_users_exceeds_max_active();
